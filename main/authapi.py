@@ -8,8 +8,8 @@ from dataclasses import dataclass
 # SETUP ######################################################################
 
 # File locations
-auth_loc = __file__
-parent_dir = os.path.abspath(os.path.join(auth_loc, '..'))
+this_loc = __file__
+parent_dir = os.path.abspath(os.path.join(this_loc, '..'))
 local_dir = os.path.abspath(os.path.join(parent_dir, '..', 'local'))
 
 # Globals
