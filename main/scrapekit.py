@@ -28,6 +28,7 @@ class MintScraper():
         options = webdriver.ChromeOptions()
 #         options.add_argument(f"user-data-dir={self.opt_dir}")
         self.driver = webdriver.Chrome(self.driver_loc, options=options)
+        self.logged_in = False
 
     def await_element(self, criteria, by=By.CSS_SELECTOR, timeout=10):
         """
@@ -51,3 +52,24 @@ class MintScraper():
         pw_form.send_keys(authapi.mint.password)
         sign_in_btn = self.await_element('#ius-sign-in-submit-btn')
         sign_in_btn.click()
+        self.logged_in = True
+
+    def refresh_accounts(self, login=None):
+        if login is None:
+            login = self.logged_in
+        if login:
+            self.login()
+        gear_btn = self.await_element('#yui_3_2_0pr1_1_158224734217425450')
+        gear_btn.click()
+        refresh_elem = self.await_element('[data-action=refreshAccounts]')
+        refresh_elem.click()
+
+    def download_transactions(self, login=None):
+        if login is None:
+            login = self.logged_in
+        if login:
+            self.login()
+        trans_link = self.await_element('li#transaction > a')
+        trans_link.click()
+        trans_exp = self.await_element('#transactionExport')
+        trans_exp.click()
