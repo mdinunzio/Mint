@@ -14,6 +14,8 @@ local_dir = os.path.abspath(os.path.join(parent_dir, '..', 'local'))
 
 # Globals
 mint = None
+twilio = None
+user_data = None
 
 
 # MAIN #######################################################################
@@ -25,10 +27,21 @@ class MintCredentials:
     password: str
 
 
-# PredictIt Cookies and header authorization
+@dataclass
+class TwilioCredentials:
+    account_sid: str
+    auth_token: str
+    number: str
+
+
+@dataclass
+class UserData:
+    number: str
+
+
 def _setup_mint():
     """
-    Set up the PredictItCredentials global variable.
+    Set up the MintCredentials global instance.
     """
     global mint
     mint_fl = os.path.join(local_dir, 'mint.json')
@@ -37,4 +50,28 @@ def _setup_mint():
     mint = MintCredentials(**mint_json)
 
 
+def _setup_twilio():
+    """
+    Set up the TwilioCredentials global instance.
+    """
+    global twilio
+    twilio_fl = os.path.join(local_dir, 'twilio.json')
+    with open(twilio_fl, 'r') as f:
+        twilio_json = json.load(f)
+    twilio = TwilioCredentials(**twilio_json)
+
+
+def _setup_user():
+    """
+    Set up the UserData global instance.
+    """
+    global user_data
+    user_fl = os.path.join(local_dir, 'user_data.json')
+    with open(user_fl, 'r') as f:
+        user_json = json.load(f)
+    user_data = UserData(**user_json)
+
+
 _setup_mint()
+_setup_twilio()
+_setup_user()
