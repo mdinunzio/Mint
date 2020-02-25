@@ -1,3 +1,4 @@
+import config as cfg
 import json
 import os
 import sys
@@ -7,12 +8,6 @@ from dataclasses import dataclass
 
 # SETUP ######################################################################
 
-# File locations
-this_loc = __file__
-parent_dir = os.path.abspath(os.path.join(this_loc, '..'))
-local_dir = os.path.abspath(os.path.join(parent_dir, '..', 'local'))
-
-# Globals
 mint = None
 twilio = None
 user_data = None
@@ -44,7 +39,7 @@ def _setup_mint():
     Set up the MintCredentials global instance.
     """
     global mint
-    mint_fl = os.path.join(local_dir, 'mint.json')
+    mint_fl = os.path.join(cfg.LOCAL_DIR, 'mint.json')
     with open(mint_fl, 'r') as f:
         mint_json = json.load(f)
     mint = MintCredentials(**mint_json)
@@ -55,7 +50,7 @@ def _setup_twilio():
     Set up the TwilioCredentials global instance.
     """
     global twilio
-    twilio_fl = os.path.join(local_dir, 'twilio.json')
+    twilio_fl = os.path.join(cfg.LOCAL_DIR, 'twilio.json')
     with open(twilio_fl, 'r') as f:
         twilio_json = json.load(f)
     twilio = TwilioCredentials(**twilio_json)
@@ -66,7 +61,7 @@ def _setup_user():
     Set up the UserData global instance.
     """
     global user_data
-    user_fl = os.path.join(local_dir, 'user_data.json')
+    user_fl = os.path.join(cfg.LOCAL_DIR, 'user_data.json')
     with open(user_fl, 'r') as f:
         user_json = json.load(f)
     user_data = UserData(**user_json)

@@ -2,6 +2,7 @@ import authapi
 import time
 import os
 import re
+import shutil
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -68,7 +69,8 @@ class MintScraper():
             login = not self.logged_in
         if login:
             self.login()
-        gear_btn = self.await_element('#yui_3_2_0pr1_1_158224734217425450')
+        gear_btn = self.await_element('.actionsMenuIcon.icon.icon-gear-gray3')
+        self.driver.execute_script("window.scrollTo(0, 250)")
         gear_btn.click()
         refresh_elem = self.await_element('[data-action=refreshAccounts]')
         refresh_elem.click()
@@ -115,3 +117,17 @@ def get_latest_file_location():
     trans_files.sort(key=_sort_files, reverse=True)
     trans_file = trans_files[0]
     return os.path.join(DL_DIR, trans_file)
+
+
+def delete_all_tranaction_files():
+    """
+    Delete all files in the Downloads folder
+    """
+    dl_files = os.listdir(DL_DIR)
+    trans_files = [x for x in dl_files if trans_re.match(x)]
+    for f in trans_files:
+        try:
+            fl_path = os.path.join(DL_DIR, f)
+            os.remove(fl_path)
+        except Exception as e:
+            print(e)

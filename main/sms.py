@@ -3,6 +3,7 @@ from twilio.rest import Client
 
 
 class SmsManager():
+
     def __init__(self):
         self.account_sid = authapi.twilio.account_sid
         self.auth_token = authapi.twilio.auth_token
