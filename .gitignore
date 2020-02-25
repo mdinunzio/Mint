@@ -1,6 +1,6 @@
 .project
 .pydevproject
-*/__pycache__/*
+*/__pycache__
 .ipynb_checkpoints
 misc
 local
