@@ -4,6 +4,7 @@ import pandas as pd
 import datetime
 import json
 import os
+import re
 
 
 pd.set_option('display.max_rows', 500)
@@ -17,18 +18,29 @@ with open(FIN_LOC, 'r') as f:
     FIN_JSON = json.load(f)
 CF_LOC = FIN_JSON['cf_loc']
 
+# Establish patterns for identifying utility expenses
+utils = pd.read_excel(CF_LOC, sheet_name="Dashboard",
+                      header=17, usecols="H:I")
+utils = utils.dropna(subset=['Column'])
+util_patterns = [(r['Column'], r['Pattern']) for _, r in utils.iterrows()]
 
-def get_utility_patterns():
+
+def apply_transaction_groups(x):
     """
-    Return a dictionary of utility line items and their regex patterns.
+    Label a transaction as income, rent, utilities, or
+    discretionary spending.
     """
-    utils = pd.read_excel(CF_LOC, sheet_name="Dashboard",
-                          header=17, usecols="H:I")
-    utils = utils.dropna(subset=['Column'])
-    utils = utils.set_index('Column')['Pattern']
-    utils = utils.map(lambda x: x.replace('*', '*.'))
-    util_patterns = utils.to_dict()
-    return util_patterns
+    # Check if rent
+    if x['Category'] == 'Mortgage & Rent':
+        return 'Rent'
+    # Check if income
+    if x['Category'] == 'Income':
+        return 'Income'
+    # Check if utility
+    if any([re.match(y[1], x[y[0]]) for y in util_patterns]):
+        return 'Utilities'
+    # Otherwise, must be discretionary
+    return 'Discretionary'
 
 
 class TransactionManager():
@@ -48,12 +60,36 @@ class TransactionManager():
         """
         if self.fl_loc is None:
             self.fl_loc = scrapekit.get_latest_file_location()
-        self.transactions = pd.read_csv(self.fl_loc)
-        self.transactions['Date'] = self.transactions['Date'].map(
+        self.df = pd.read_csv(self.fl_loc)
+        self.df['Date'] = self.df['Date'].map(
             lambda x: pd.Timestamp(x).date())
-        self.transactions['Amount'] = self.transactions.apply(
+        self.df['Amount'] = self.df.apply(
             lambda x: -x['Amount'] if x['Transaction Type'] == 'debit'
             else x['Amount'], axis=1)
+        self.df['Group'] = self.df.apply(apply_transaction_groups, axis=1)
+
+    def get_spending_summary(self, n=5, count=False):
+        """
+        Return a DataFrame containing an n-day summary of
+        discretionary spending.
+        Optionally return the count of tranactions.
+        """
+        today = datetime.date.today()
+        tmn = today - datetime.timedelta(days=n)
+        spend = self.df[self.df['Group'] == 'Discretionary']
+        spend5d = spend[spend['Date'] >= tmn]
+        spend_count = len(spend5d)
+        spend_grp = spend5d.groupby('Date')
+        spend_stats = spend_grp[['Amount']].sum()
+        spend_stats = spend_stats.reset_index()
+        spend_stats = spend_stats.sort_values('Date', ascending=False)
+        spend_stats['Day'] = spend_stats['Date'].map(
+            lambda x: '{:%a %d}'.format(x))
+        spend_stats = spend_stats[['Day', 'Amount']]
+        spend_stats = spend_stats.reset_index(drop=True)
+        if count:
+            return spend_stats, spend_count
+        return spend_stats
 
     def __repr__(self):
         return f'Tranasactions {self.month:.0f}/{self.year:.0f}'

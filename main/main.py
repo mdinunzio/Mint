@@ -1,5 +1,6 @@
 import config as cfg
 import scrapekit
+import finances
 import sms
 import time
 import pandas as pd
@@ -28,23 +29,16 @@ def download_and_kill():
 
 
 def send_daily_update():
+    """
+    Download the most recent record of transactions and
+    send a 5-day summary via SMS.
+    """
     download_and_kill()
-    fl_loc = scrapekit.get_latest_file_location()
-    trans = pd.read_csv(fl_loc)
-    trans['Date'] = trans['Date'].map(lambda x: pd.Timestamp(x).date())
-    today = datetime.date.today()
-    tm5 = today - datetime.timedelta(days=5)
-    spend = trans[trans['Transaction Type'] == 'debit']
-    spend5d = spend[spend['Date'] >= tm5]
-    sg = spend5d.groupby('Date')
-    dspend = sg[['Amount']].sum()
-    dspend = dspend.reset_index()
-    dspend = dspend.sort_values('Date', ascending=False)
-    dspend['Day'] = dspend['Date'].map(lambda x: '{:%a %d}'.format(x))
-    dspend = dspend[['Day', 'Amount']]
+    tmgr = finances.TransactionManager()
     sm = sms.SmsManager()
-    send_str = dspend.to_string(header=False, index=False)
-    send_str = 'Spending:\n' + send_str
+    spend_smry, spend_count = tmgr.get_spending_summary(n=5, count=True)
+    send_str = f'{spend_count:,.0f} items:\n'
+    send_str += spend_smry.to_string(header=False, index=False)
     sm.send(send_str)
 
 
