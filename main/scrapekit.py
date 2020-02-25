@@ -40,7 +40,7 @@ class MintScraper():
     def await_element(self, criteria,
                       by_type=By.CSS_SELECTOR,
                       ec_type=EC.element_to_be_clickable,
-                      timeout=20):
+                      timeout=120):
         """
         Return an element on a page after it has finished rendering.
         """
