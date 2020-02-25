@@ -33,7 +33,7 @@ class MintScraper():
             USER_DIR,
             r'AppData\Local\Google\Chrome\User Data\Default')
         options = webdriver.ChromeOptions()
-#         options.add_argument(f"user-data-dir={self.opt_dir}")
+        options.add_argument(f"user-data-dir={self.opt_dir}")
         self.driver = webdriver.Chrome(DRIVER_LOC, options=options)
         self.driver.maximize_window()
         self.logged_in = False
