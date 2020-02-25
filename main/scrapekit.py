@@ -121,7 +121,7 @@ def get_latest_file_location():
 
 def delete_all_tranaction_files():
     """
-    Delete all files in the Downloads folder
+    Delete all transactions files in the Downloads folder.
     """
     dl_files = os.listdir(DL_DIR)
     trans_files = [x for x in dl_files if trans_re.match(x)]
