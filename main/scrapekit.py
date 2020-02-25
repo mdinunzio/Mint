@@ -13,7 +13,7 @@ from selenium.webdriver.support import expected_conditions as EC
 MINT_URL = r'https://www.mint.com'
 
 # Paths
-DRIVER_LOC = r'C:\Program Files\chromedriver_win32\chromedriver.exe'
+DRIVER_LOC = r'C:\Program Files (x86)\chromedriver_win32\chromedriver.exe'
 USER_DIR = os.path.expanduser('~')
 DL_DIR = os.path.join(USER_DIR, 'Downloads')
 OPT_DIR = os.path.join(
