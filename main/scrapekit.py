@@ -85,13 +85,12 @@ class MintScraper():
         trans_link.click()
         trans_exp = self.await_element('#transactionExport')
         time.sleep(10)
-        bar_x = self.driver.find_element(By.CSS_SELECTOR,
-                                         '.x.icon.icon-x-white')
-        if bar_x:
-            try:
-                bar_x.click()
-            except Exception as e:
-                print(e)
+        try:
+            bar_x = self.driver.find_element(
+                By.CSS_SELECTOR, '.x.icon.icon-x-white')
+            bar_x.click()
+        except Exception as e:
+            print(e)
         trans_exp.click()
 
 
