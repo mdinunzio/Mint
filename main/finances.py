@@ -68,7 +68,7 @@ class TransactionManager():
             else x['Amount'], axis=1)
         self.df['Group'] = self.df.apply(apply_transaction_groups, axis=1)
 
-    def get_spending_summary(self, n=5, count=False):
+    def get_spending_summary(self, n=5, total=False, count=False):
         """
         Return a DataFrame containing an n-day summary of
         discretionary spending.
@@ -87,6 +87,10 @@ class TransactionManager():
             lambda x: '{:%a %d}'.format(x))
         spend_stats = spend_stats[['Day', 'Amount']]
         spend_stats = spend_stats.reset_index(drop=True)
+        if total:
+            slen = len(spend_stats)
+            spend_stats.loc[slen, 'Day'] = 'Total'
+            spend_stats.loc[slen, 'Amount'] = spend_stats['Amount'].sum()
         if count:
             return spend_stats, spend_count
         return spend_stats
