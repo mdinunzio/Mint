@@ -34,7 +34,7 @@ def apply_transaction_groups(x):
     if x['Category'] == 'Mortgage & Rent':
         return 'Rent'
     # Check if income
-    if x['Category'] == 'Income':
+    if x['Category'] in ('Paycheck', 'Income'):
         return 'Income'
     # Check if utility
     if any([re.match(y[1], x[y[0]]) for y in util_patterns]):
