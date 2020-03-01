@@ -23,6 +23,9 @@ utils = pd.read_excel(CF_LOC, sheet_name="Dashboard",
                       header=17, usecols="H:I")
 utils = utils.dropna(subset=['Column'])
 util_patterns = [(r['Column'], r['Pattern']) for _, r in utils.iterrows()]
+# Income categories
+income_categories = ['Income', 'Bonus', 'Interest Income', 'Paycheck',
+                     'Reimbursement', 'Rental Income', 'Returned Purchase']
 
 
 def apply_transaction_groups(x):
@@ -34,7 +37,7 @@ def apply_transaction_groups(x):
     if x['Category'] == 'Mortgage & Rent':
         return 'Rent'
     # Check if income
-    if x['Category'] in ('Paycheck', 'Income'):
+    if x['Category'] in income_categories:
         return 'Income'
     # Check if utility
     if any([re.match(y[1], x[y[0]]) for y in util_patterns]):
