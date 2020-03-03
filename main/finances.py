@@ -18,19 +18,28 @@ with open(FIN_LOC, 'r') as f:
     FIN_JSON = json.load(f)
 CF_LOC = FIN_JSON['cf_loc']
 
-# Establish patterns for identifying utility expenses
-utils = pd.read_excel(CF_LOC, sheet_name="Dashboard",
-                      header=17, usecols="H:I")
-utils = utils.dropna(subset=['Column'])
-util_patterns = [(r['Column'], r['Pattern']) for _, r in utils.iterrows()]
+# Establish patterns for identifying recurring expenses
+recurring = pd.read_excel(CF_LOC, sheet_name="Dashboard", usecols="K:M")
+first_col = recurring.columns[0]
+col_idx = recurring[recurring[first_col] == 'Column'].index[0]
+recurring.columns = recurring.loc[col_idx, :]
+recurring.columns.name = None
+recurring = recurring.drop(col_idx)
+recurring = recurring.dropna(subset=['Column'])
+recurring = recurring.reset_index(drop=True)
+recurring_patterns = [(r['Column'], r['Pattern'])
+                      for _, r in recurring.iterrows()]
 # Income categories
 income_categories = ['Income', 'Bonus', 'Interest Income', 'Paycheck',
                      'Reimbursement', 'Rental Income', 'Returned Purchase']
 
+# Bookkeeping categories
+bookkeeping_categories = ['Credit Card Payment', 'Transfer']
+
 
 def apply_transaction_groups(x):
     """
-    Label a transaction as income, rent, utilities, or
+    Label a transaction as income, rent, recurring, or
     discretionary spending.
     """
     # Check if rent
@@ -39,9 +48,12 @@ def apply_transaction_groups(x):
     # Check if income
     if x['Category'] in income_categories:
         return 'Income'
-    # Check if utility
-    if any([re.match(y[1], x[y[0]]) for y in util_patterns]):
-        return 'Utilities'
+    # Check if bookkeeping
+    if x['Category'] in bookkeeping_categories:
+        return 'Bookkeeping'
+    # Check if recurring
+    if any([re.match(y[1], x[y[0]]) for y in recurring_patterns]):
+        return 'Recurring'
     # Otherwise, must be discretionary
     return 'Discretionary'
 

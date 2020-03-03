@@ -37,9 +37,13 @@ def send_daily_update():
     tmgr = finances.TransactionManager()
     sm = sms.SmsManager()
     spend_smry, spend_count = tmgr.get_spending_summary(
-        n=5, total=True, count=True)
-    send_str = f'{spend_count:,.0f} items:\n'
+        n=5, total=False, count=True)
+    spend_ttl = spend_smry['Amount'].sum()
+    spend_pace = spend_ttl / len(spend_smry)
+    send_str = f'{spend_count:,.0f} items:\n\n'
     send_str += spend_smry.to_string(header=False, index=False)
+    send_str += f'\n\nTotal: ${spend_ttl:,.2f}'
+    send_str += f'\nPace: ${spend_pace:,.2f}'
     sm.send(send_str)
 
 
