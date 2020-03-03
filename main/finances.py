@@ -59,13 +59,7 @@ def apply_transaction_groups(x):
 
 
 class TransactionManager():
-    def __init__(self, month=None, year=None, fl_loc=None):
-        self.month = month
-        self.year = year
-        if self.month is None:
-            self.month = datetime.date.today().month
-        if self.year is None:
-            self.year = datetime.date.today().year
+    def __init__(self, fl_loc=None):
         self.fl_loc = fl_loc
         self.set_df()
 
@@ -110,5 +104,25 @@ class TransactionManager():
             return spend_stats, spend_count
         return spend_stats
 
+    def summarize_month(self, month, year=None):
+        """
+        Return a DataFrame summarizing monthly cash flow
+        """
+        if year is None:
+            year = datetime.datetime.today().year
+        month_df = self.df.copy()
+        month_df = month_df[month_df['Date'].map(lambda x: x.year) == year]
+        month_df = month_df[month_df['Date'].map(lambda x: x.month) == month]
+        mgrp = month_df.groupby(['Group', 'Transaction Type'])
+        mstats = mgrp.agg('sum')
+        mstats = mstats.unstack(level=1)
+        mstats = mstats.fillna(0)
+        mstats.columns = [x[1] for x in mstats.columns]
+        mstats['net'] = mstats.sum(axis=1)
+        mstats = mstats.drop('Bookkeeping')
+        mstats.loc['Net', :] = mstats.sum()
+        return mstats
+
     def __repr__(self):
-        return f'Tranasactions {self.month:.0f}/{self.year:.0f}'
+        max_date = self.df['Date'].max()
+        return f'Tranasactions up to {max_date}'
