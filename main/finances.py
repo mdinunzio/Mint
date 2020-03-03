@@ -106,7 +106,7 @@ class TransactionManager():
 
     def summarize_month(self, month, year=None):
         """
-        Return a DataFrame summarizing monthly cash flow
+        Return a DataFrame summarizing monthly cash flow.
         """
         if year is None:
             year = datetime.datetime.today().year
