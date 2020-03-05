@@ -297,7 +297,7 @@ class TransactionManager():
         cf_smry.loc['Discretionary', 'Remaining'] = disc_rem
         return cf_smry
 
-    def get_month_pacing(self):
+    def get_monthly_pacing(self):
         """
         Return the amount spent, amount remaining, amount spent
         per day, and amount remaining per day for the given month.
