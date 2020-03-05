@@ -5,6 +5,8 @@ import datetime
 import json
 import os
 import re
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 
 
 pd.set_option('display.max_rows', 500)
@@ -37,6 +39,8 @@ income_categories = ['Income', 'Bonus', 'Interest Income', 'Paycheck',
 bookkeeping_categories = ['Credit Card Payment', 'Transfer']
 
 
+# FUNCTIONS #################################################################
+
 def apply_transaction_groups(x):
     """
     Label a transaction as income, rent, recurring, or
@@ -57,6 +61,21 @@ def apply_transaction_groups(x):
     # Otherwise, must be discretionary
     return 'Discretionary'
 
+def apply_transaction_subgroups():
+    pass
+
+def get_cash_flow_model():
+    """
+    Return a DataFrame of expected monthly cash flow.
+    """
+    cfm = pd.read_excel(CF_LOC, usecols='A:E', header=5)
+    cfm = cfm.rename(columns={'Unnamed: 0': 'Item'})
+    cfm = cfm.dropna(subset=['Item'])
+    cfm = cfm.drop('Realized', axis=1)
+    return cfm
+
+
+# MODELS #####################################################################
 
 class TransactionManager():
     def __init__(self, fl_loc=None):
@@ -122,6 +141,35 @@ class TransactionManager():
         mstats = mstats.drop('Bookkeeping')
         mstats.loc['Net', :] = mstats.sum()
         return mstats
+
+    def get_month_pacing(self, month=None):
+        
+
+    def graph_discretionary(self, start_date=None, end_date=None):
+        """
+        Graph discretionary spending by day for a given time period.
+        """
+        if start_date is None:
+            today = datetime.date.today()
+            start_date = datetime.date(today.year, today.month, 1)
+        if end_date is None:
+            next_start = datetime.date(
+                start_date.year, start_date.month + 1, 1)
+            end_date = next_start - datetime.timedelta(days=1)
+        period_df = self.df.copy()
+        period_df = period_df[period_df['Date'] >= start_date]
+        period_df = period_df[period_df['Date'] <= end_date]
+        discr = period_df[period_df['Group'] == 'Discretionary']
+        dgrp = discr.groupby('Date')
+        dsum = -dgrp['Amount'].sum()
+        plt.figure()
+        ax = plt.subplot(111)
+        ax.xaxis.set_major_formatter(mdates.DateFormatter('%b %d'))
+        ax.bar(dsum.index, dsum.values)
+        ax.xaxis_date()
+        plt.xticks(rotation=90)
+        plt.tight_layout()
+        plt.savefig(cfg.DT_DIR + r'\spending.png')
 
     def __repr__(self):
         max_date = self.df['Date'].max()
