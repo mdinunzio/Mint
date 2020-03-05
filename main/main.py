@@ -36,7 +36,7 @@ def send_daily_update():
     download_and_kill()
     tmgr = finances.TransactionManager()
     sm = sms.SmsManager()
-    spend_smry, spend_count = tmgr.get_spending_summary(
+    spend_smry, spend_count = tmgr.get_spending_by_day(
         n=5, total=False, count=True)
     spend_ttl = spend_smry['Amount'].sum()
     spend_pace = spend_ttl / len(spend_smry)

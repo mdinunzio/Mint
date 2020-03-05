@@ -79,14 +79,19 @@ class TransactionManager():
     def apply_transaction_groups(self, x):
         """
         Label a transaction as income, rent, recurring, or
-        discretionary spending.
+        discretionary spending, as well as it's subgroup.
         """
         # Check if rent
         if x['Category'] == 'Mortgage & Rent':
             return 'Rent', x['Category']
         # Check if income
         if x['Category'] in INCOME_CAT:
-            return 'Income', x['Category']
+            if x['Category'] != 'Paycheck':
+                return 'Income', x['Category']
+            if x['Date'].day <= 20:
+                return 'Income', 'Middle-of-Month'
+            if x['Date'].day > 20:
+                return 'Income', 'End-of-Month'
         # Check if bookkeeping
         if x['Category'] in BOOKKEEPING_CAT:
             return 'Bookkeeping', x['Category']
@@ -113,7 +118,7 @@ class TransactionManager():
         self.df[['Group', 'Subgroup']] = self.df.apply(
             self.apply_transaction_groups, axis=1, result_type='expand')
 
-    def get_spending_summary(self, n=5, total=False, count=False):
+    def get_spending_by_day(self, n=5, total=False, count=False):
         """
         Return a DataFrame containing an n-day summary of
         discretionary spending.
@@ -140,9 +145,9 @@ class TransactionManager():
             return spend_stats, spend_count
         return spend_stats
 
-    def summarize_month(self, month, year=None):
+    def get_short_summary(self, month, year=None):
         """
-        Return a DataFrame summarizing monthly cash flow.
+        Return a short DataFrame summarizing monthly cash flow.
         """
         if year is None:
             year = datetime.datetime.today().year
@@ -152,17 +157,50 @@ class TransactionManager():
         mgrp = month_df.groupby(['Group', 'Transaction Type'])
         mstats = mgrp.agg('sum')
         mstats = mstats.unstack(level=1)
-        mstats = mstats.fillna(0)
         mstats.columns = [x[1] for x in mstats.columns]
+        cols = ['debit', 'credit']
+        for c in cols:
+            if c not in mstats.columns:
+                mstats[c] = 0
         mstats['net'] = mstats.sum(axis=1)
-        mstats = mstats.drop('Bookkeeping')
+        idx_order = ['Income', 'Rent', 'Recurring', 'Discretionary']
+        mstats = mstats.reindex(idx_order)
+        mstats = mstats.fillna(0)
         mstats.loc['Net', :] = mstats.sum()
-        idx_order = ['Income', 'Rent', 'Recurring', 'Discretionary', 'Net']
-        mstats = mstats.loc[idx_order, :]
         return mstats
 
-    def get_month_pacing(self, month=None):
-        cfm = get_cash_flow_model()
+    def get_long_summary(self, month, year=None):
+        """
+        Return a detailed DataFrame summarizing monthly cash flow.
+        """
+        if year is None:
+            year = datetime.datetime.today().year
+        month_df = self.df.copy()
+        month_df = month_df[month_df['Date'].map(lambda x: x.year) == year]
+        month_df = month_df[month_df['Date'].map(lambda x: x.month) == month]
+        mgrp = month_df.groupby(['Group', 'Subgroup', 'Transaction Type'])
+        mstats = mgrp.agg('sum')
+        mstats = mstats.unstack(level=2)
+        mstats.columns = [x[1] for x in mstats.columns]
+        cols = ['debit', 'credit']
+        for c in cols:
+            if c not in mstats.columns:
+                mstats[c] = 0
+        idx_order = ['Income', 'Rent', 'Recurring', 'Discretionary']
+        mstats = mstats.unstack(level=1)
+        mstats = mstats.reindex(idx_order)
+        mstats = mstats.stack(level=1)
+        mstats = mstats.fillna(0)
+        mstats['net'] = mstats.sum(axis=1)
+        mstats.loc['Net', 'net'] = mstats['net'].sum()
+        return mstats
+
+    def get_month_pacing(self, month=None, year=None):
+        if month is None:
+            month = datetime.date.today().month
+        if year is None:
+            year = datetime.date.today().year
+        lsum = self.get_long_summary(month, year)
 
     def graph_discretionary(self, start_date=None, end_date=None):
         """
