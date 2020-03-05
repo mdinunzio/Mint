@@ -20,49 +20,15 @@ with open(FIN_LOC, 'r') as f:
     FIN_JSON = json.load(f)
 CF_LOC = FIN_JSON['cf_loc']
 
-# Establish patterns for identifying recurring expenses
-recurring = pd.read_excel(CF_LOC, sheet_name="Dashboard", usecols="K:M")
-first_col = recurring.columns[0]
-col_idx = recurring[recurring[first_col] == 'Column'].index[0]
-recurring.columns = recurring.loc[col_idx, :]
-recurring.columns.name = None
-recurring = recurring.drop(col_idx)
-recurring = recurring.dropna(subset=['Column'])
-recurring = recurring.reset_index(drop=True)
-recurring_patterns = [(r['Column'], r['Pattern'])
-                      for _, r in recurring.iterrows()]
 # Income categories
-income_categories = ['Income', 'Bonus', 'Interest Income', 'Paycheck',
-                     'Reimbursement', 'Rental Income', 'Returned Purchase']
+INCOME_CAT = ['Income', 'Bonus', 'Interest Income', 'Paycheck',
+              'Reimbursement', 'Rental Income', 'Returned Purchase']
 
 # Bookkeeping categories
-bookkeeping_categories = ['Credit Card Payment', 'Transfer']
+BOOKKEEPING_CAT = ['Credit Card Payment', 'Transfer']
 
 
 # FUNCTIONS #################################################################
-
-def apply_transaction_groups(x):
-    """
-    Label a transaction as income, rent, recurring, or
-    discretionary spending.
-    """
-    # Check if rent
-    if x['Category'] == 'Mortgage & Rent':
-        return 'Rent'
-    # Check if income
-    if x['Category'] in income_categories:
-        return 'Income'
-    # Check if bookkeeping
-    if x['Category'] in bookkeeping_categories:
-        return 'Bookkeeping'
-    # Check if recurring
-    if any([re.match(y[1], x[y[0]]) for y in recurring_patterns]):
-        return 'Recurring'
-    # Otherwise, must be discretionary
-    return 'Discretionary'
-
-def apply_transaction_subgroups():
-    pass
 
 def get_cash_flow_model():
     """
@@ -77,10 +43,59 @@ def get_cash_flow_model():
 
 # MODELS #####################################################################
 
+class RecurringManager():
+    def __init__(self):
+        # Recurring categories setup
+        df = pd.read_excel(CF_LOC,
+                           sheet_name="Dashboard",
+                           usecols="A:M")
+        col_map = {'Month': 'Subgroup',
+                   'Unnamed: 10': 'Column',
+                   'Unnamed: 11': 'Pattern'}
+        df = df.rename(columns=col_map)
+        df = df.dropna(subset=list(col_map.values()))
+        cols = ['Subgroup', 'Column', 'Pattern']
+        df = df[cols]
+        df = df.reset_index(drop=True)
+        self.df = df
+
+    def get_subgroup(self, row):
+        """
+        Return the subgroup for a Transaction Manager's DataFrame
+        if the row corresponds to a recurring transaction, otherwise
+        return None
+        """
+        for _, (subgroup, column, pattern) in self.df.iterrows():
+            if re.match(pattern, row[column]):
+                return subgroup
+        return None
+
+
 class TransactionManager():
     def __init__(self, fl_loc=None):
         self.fl_loc = fl_loc
         self.set_df()
+
+    def apply_transaction_groups(self, x):
+        """
+        Label a transaction as income, rent, recurring, or
+        discretionary spending.
+        """
+        # Check if rent
+        if x['Category'] == 'Mortgage & Rent':
+            return 'Rent', x['Category']
+        # Check if income
+        if x['Category'] in INCOME_CAT:
+            return 'Income', x['Category']
+        # Check if bookkeeping
+        if x['Category'] in BOOKKEEPING_CAT:
+            return 'Bookkeeping', x['Category']
+        # Check if recurring
+        recur_subgroup = self.recur_mgr.get_subgroup(x)
+        if recur_subgroup:
+            return 'Recurring', recur_subgroup
+        # Otherwise, must be discretionary
+        return 'Discretionary', 'Discretionary'
 
     def set_df(self):
         """
@@ -94,7 +109,9 @@ class TransactionManager():
         self.df['Amount'] = self.df.apply(
             lambda x: -x['Amount'] if x['Transaction Type'] == 'debit'
             else x['Amount'], axis=1)
-        self.df['Group'] = self.df.apply(apply_transaction_groups, axis=1)
+        self.recur_mgr = RecurringManager()
+        self.df[['Group', 'Subgroup']] = self.df.apply(
+            self.apply_transaction_groups, axis=1, result_type='expand')
 
     def get_spending_summary(self, n=5, total=False, count=False):
         """
@@ -140,10 +157,12 @@ class TransactionManager():
         mstats['net'] = mstats.sum(axis=1)
         mstats = mstats.drop('Bookkeeping')
         mstats.loc['Net', :] = mstats.sum()
+        idx_order = ['Income', 'Rent', 'Recurring', 'Discretionary', 'Net']
+        mstats = mstats.loc[idx_order, :]
         return mstats
 
     def get_month_pacing(self, month=None):
-        
+        cfm = get_cash_flow_model()
 
     def graph_discretionary(self, start_date=None, end_date=None):
         """
@@ -170,6 +189,7 @@ class TransactionManager():
         plt.xticks(rotation=90)
         plt.tight_layout()
         plt.savefig(cfg.DT_DIR + r'\spending.png')
+        plt.close()
 
     def __repr__(self):
         max_date = self.df['Date'].max()
