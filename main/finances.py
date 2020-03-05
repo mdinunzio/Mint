@@ -31,9 +31,9 @@ BOOKKEEPING_CAT = ['Credit Card Payment', 'Transfer']
 
 # FUNCTIONS #################################################################
 
-def get_cash_flow_model():
+def get_cash_flow_sheet():
     """
-    Return a DataFrame of expected monthly cash flow.
+    Return a DataFrame of Cash FLow sheet format.
     """
     cfm = pd.read_excel(CF_LOC, usecols='A:E', header=5)
     cfm = cfm.rename(columns={'Unnamed: 0': 'Item'})
@@ -61,7 +61,13 @@ def get_cash_flow_structure(recur_mgr):
     cf_structure = pd.DataFrame(columns=['Group', 'Subgroup'],
                                 data=all_pairs)
     return cf_structure
-    # Get
+
+
+def get_days_in_month(month, year):
+    start_of_month = datetime.date(year, month, 1)
+    next_start_of_month = datetime.date(year, month + 1, 1)
+    tdelta = next_start_of_month - start_of_month
+    return tdelta.days
 
 
 # MODELS #####################################################################
@@ -232,7 +238,7 @@ class TransactionManager():
             year = datetime.date.today().year
 
         cf_struct = get_cash_flow_structure(self.recur_mgr)
-        cf_model = get_cash_flow_model()
+        cf_model = get_cash_flow_sheet()
         cf_model = cf_model[['Item', 'Expected']]
         cf_model = cf_model.rename(columns={'Item': 'Subgroup'})
 
@@ -291,12 +297,26 @@ class TransactionManager():
         cf_smry.loc['Discretionary', 'Remaining'] = disc_rem
         return cf_smry
 
-    def get_month_pacing(self, month=None, year=None):
-        if month is None:
-            month = datetime.date.today().month
-        if year is None:
-            year = datetime.date.today().year
-        lsum = self.get_long_summary(month, year)
+    def get_month_pacing(self):
+        """
+        Return the amount spent, amount remaining, amount spent
+        per day, and amount remaining per day for the given month.
+        """
+        today = datetime.date.today()
+        day = today.day
+        month = today.month
+        year = today.year
+        cf_smry = self.get_cash_flow_summary(month, year)
+        spent = cf_smry.loc[
+            ('Discretionary', 'Discretionary'), 'Realized']
+        remaining = cf_smry.loc[
+            ('Discretionary', 'Discretionary'), 'Remaining']
+        days_in_month = get_days_in_month(month, year)
+        # Only days left includes today
+        days_left = days_in_month - day + 1
+        spent_per_day = spent / (day - 1)
+        rem_per_day = remaining / days_left
+        return spent, remaining, spent_per_day, rem_per_day
 
     def graph_discretionary(self, start_date=None, end_date=None):
         """
