@@ -1,6 +1,7 @@
 import config as cfg
 import scrapekit
 import pandas as pd
+import numpy as np
 import datetime
 import json
 import os
@@ -39,6 +40,28 @@ def get_cash_flow_model():
     cfm = cfm.dropna(subset=['Item'])
     cfm = cfm.drop('Realized', axis=1)
     return cfm
+
+
+def get_cash_flow_structure(recur_mgr):
+    """
+    Return a DataFrame with Groups and Subgroups that should be
+    left-mergeable with summaries derived from Transaction data.
+    """
+    # Get income pairs
+    paycheck_sg = ['Middle-of-Month', 'End-of-Month']
+    other_income_sg = ['Bonus', 'Interest Income', 'Reimbursement',
+                       'Rental Income', 'Returned Purchase', 'Income']
+    income_sg = paycheck_sg + other_income_sg
+    income_pairs = [('Income', sg) for sg in income_sg]
+    rent_pairs = [('Mortgage & Rent', 'Mortgage & Rent')]
+    recurring_pairs = [('Recurring', sg) for sg in
+                       recur_mgr.df['Subgroup'].tolist()]
+    disc_pairs = [('Discretionary', 'Discretionary')]
+    all_pairs = income_pairs + rent_pairs + recurring_pairs + disc_pairs
+    cf_structure = pd.DataFrame(columns=['Group', 'Subgroup'],
+                                data=all_pairs)
+    return cf_structure
+    # Get
 
 
 # MODELS #####################################################################
@@ -80,6 +103,8 @@ class TransactionManager():
         """
         Label a transaction as income, rent, recurring, or
         discretionary spending, as well as it's subgroup.
+        This may fail if the number of income or bookkeeping
+        categories are expanded by Mint.
         """
         # Check if rent
         if x['Category'] == 'Mortgage & Rent':
@@ -145,7 +170,7 @@ class TransactionManager():
             return spend_stats, spend_count
         return spend_stats
 
-    def get_short_summary(self, month, year=None):
+    def get_short_summary(self, month, year=None, net=True):
         """
         Return a short DataFrame summarizing monthly cash flow.
         """
@@ -166,10 +191,11 @@ class TransactionManager():
         idx_order = ['Income', 'Rent', 'Recurring', 'Discretionary']
         mstats = mstats.reindex(idx_order)
         mstats = mstats.fillna(0)
-        mstats.loc['Net', :] = mstats.sum()
+        if net:
+            mstats.loc['Net', :] = mstats.sum()
         return mstats
 
-    def get_long_summary(self, month, year=None):
+    def get_long_summary(self, month, year=None, net=True):
         """
         Return a detailed DataFrame summarizing monthly cash flow.
         """
@@ -192,8 +218,78 @@ class TransactionManager():
         mstats = mstats.stack(level=1)
         mstats = mstats.fillna(0)
         mstats['net'] = mstats.sum(axis=1)
-        mstats.loc['Net', 'net'] = mstats['net'].sum()
+        if net:
+            mstats.loc['Net', 'net'] = mstats['net'].sum()
         return mstats
+
+    def get_cash_flow_summary(self, month=None, year=None):
+        """
+        Return a DataFrame that replicates the Cash Flow Excel sheet.
+        """
+        if month is None:
+            month = datetime.date.today().month
+        if year is None:
+            year = datetime.date.today().year
+
+        cf_struct = get_cash_flow_structure(self.recur_mgr)
+        cf_model = get_cash_flow_model()
+        cf_model = cf_model[['Item', 'Expected']]
+        cf_model = cf_model.rename(columns={'Item': 'Subgroup'})
+
+        ls = self.get_long_summary(month, year, net=False)
+        ls = ls.reset_index()
+        ls = ls.drop(['debit', 'credit'], axis=1)
+        ls = ls.rename(columns={'net': 'Realized'})
+
+        cf_smry = pd.merge(cf_struct, cf_model,
+                           how='left',
+                           on='Subgroup')
+        cf_smry = pd.merge(cf_smry, ls,
+                           how='left',
+                           on=['Group', 'Subgroup'])
+        cf_smry = cf_smry.fillna(0)
+
+        def apply_cf_projections(x):
+            """
+            If the line item is income, return any nonzero realized items,
+            otherwise return the expected column's value.
+            If item is an expense, return the minimum between expected
+            and realized.
+            """
+            if x['Group'] == 'Income':
+                if x['Realized'] != 0:
+                    return x['Realized']
+                else:
+                    return x['Expected']
+            else:
+                return min(x['Expected'], x['Realized'])
+
+        cf_smry['Projected'] = cf_smry.apply(apply_cf_projections, axis=1)
+
+        cf_smry['Remaining'] = np.NaN
+        cf_smry = cf_smry.set_index(['Group', 'Subgroup'])
+        # Remaining after income
+        income_rem = cf_smry.loc[('Income', slice(None)), 'Projected'].sum()
+        last_idx = [x[1] for x in cf_smry.index if x[0] == 'Income'][-1]
+        cf_smry.loc[('Income', last_idx), 'Remaining'] = income_rem
+        # Remaining after rent
+        proj_rent = cf_smry.loc[
+            ('Mortgage & Rent', 'Mortgage & Rent'), 'Projected']
+        rent_rem = income_rem + proj_rent
+        cf_smry.loc['Mortgage & Rent', 'Remaining'] = rent_rem
+        # Remaining after recurring
+        proj_recur = cf_smry.loc[
+            ('Recurring', slice(None)), 'Projected'].sum()
+        proj_rem = rent_rem + proj_recur
+        last_idx = [x[1] for x in cf_smry.index if x[0] == 'Recurring'][-1]
+        cf_smry.loc[('Recurring', last_idx), 'Remaining'] = proj_rem
+        # Remaining after discretionary
+        real_disc = cf_smry.loc[('Discretionary',
+                                 'Discretionary'),
+                                'Realized']
+        disc_rem = proj_rem + real_disc
+        cf_smry.loc['Discretionary', 'Remaining'] = disc_rem
+        return cf_smry
 
     def get_month_pacing(self, month=None, year=None):
         if month is None:
