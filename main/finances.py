@@ -25,8 +25,8 @@ CF_LOC = FIN_JSON['cf_loc']
 INCOME_CAT = ['Income', 'Bonus', 'Interest Income', 'Paycheck',
               'Reimbursement', 'Rental Income', 'Returned Purchase']
 
-# Bookkeeping categories
-BOOKKEEPING_CAT = ['Credit Card Payment', 'Transfer']
+# Wash categories
+WASH_CAT = ['Credit Card Payment', 'Transfer']
 
 
 # FUNCTIONS #################################################################
@@ -109,7 +109,7 @@ class TransactionManager():
         """
         Label a transaction as income, rent, recurring, or
         discretionary spending, as well as it's subgroup.
-        This may fail if the number of income or bookkeeping
+        This may fail if the number of income or wash
         categories are expanded by Mint.
         """
         # Check if rent
@@ -123,9 +123,9 @@ class TransactionManager():
                 return 'Income', 'Middle-of-Month'
             if x['Date'].day > 20:
                 return 'Income', 'End-of-Month'
-        # Check if bookkeeping
-        if x['Category'] in BOOKKEEPING_CAT:
-            return 'Bookkeeping', x['Category']
+        # Check if wash
+        if x['Category'] in WASH_CAT:
+            return 'Wash', x['Category']
         # Check if recurring
         recur_subgroup = self.recur_mgr.get_subgroup(x)
         if recur_subgroup:
