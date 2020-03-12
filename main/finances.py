@@ -8,11 +8,14 @@ import os
 import re
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+import seaborn as sns
 
 
 pd.set_option('display.max_rows', 500)
 pd.set_option('display.max_columns', 500)
 pd.set_option('display.width', 1000)
+
+sns.set()
 
 
 # File locations
@@ -341,6 +344,42 @@ class TransactionManager():
         ax.bar(dsum.index, dsum.values)
         ax.xaxis_date()
         plt.xticks(rotation=90)
+        plt.tight_layout()
+        plt.savefig(cfg.DT_DIR + r'\spending.png')
+        plt.close()
+
+    def plot_spending(self, month, year):
+        if month is None:
+            month = datetime.date.today().month
+        if year is None:
+            year = datetime.date.today().year
+        start_date = datetime.date(year, month, 1)
+        next_start = datetime.date(year, month + 1, 1)
+        end_date = next_start - datetime.timedelta(days=1)
+        days = (next_start - start_date).days
+        discr = self.df[self.df['Group'] == 'Discretionary']
+        discr = discr[discr['Date'] >= start_date]
+        discr = discr[discr['Date'] <= end_date]
+        discr_dly = discr.groupby('Date')[['Amount']].sum()
+        discr_dly['Amount'] = discr_dly['Amount'].cumsum()
+        discr_dly['Amount'] *= -1
+        discr_dly = discr_dly.reset_index()
+        cash_ws = get_cash_flow_sheet()
+        cash_ws = cash_ws.set_index('Item')
+        discr_inc = cash_ws.loc['Discretionary', 'Remaining']
+        discr_inc_dly = pd.DataFrame(
+            data=zip(pd.date_range(start_date, end_date),
+                     [discr_inc / days] * days),
+            columns=['Date', 'Income'])
+        discr_inc_dly['Date'] = discr_inc_dly['Date'] .map(lambda x: x.date())
+        discr_inc_dly['Income'] = discr_inc_dly['Income'].cumsum()
+        fig = plt.figure()
+        ax = plt.subplot(111)
+        plt.plot_date(discr_inc_dly['Date'], discr_inc_dly['Income'], '-')
+        plt.plot_date(discr_dly['Date'], discr_dly['Amount'], '-')
+        plt.title('Spending By Day')
+        plt.xticks(rotation=45)
+        ax.xaxis.set_major_locator(mdates.DayLocator(interval=5))
         plt.tight_layout()
         plt.savefig(cfg.DT_DIR + r'\spending.png')
         plt.close()
