@@ -10,6 +10,7 @@ from dataclasses import dataclass
 
 mint = None
 twilio = None
+imgur = None
 user_data = None
 
 
@@ -27,6 +28,12 @@ class TwilioCredentials:
     account_sid: str
     auth_token: str
     number: str
+
+
+@dataclass
+class ImgurCredentials:
+    client_id: str
+    client_secret: str
 
 
 @dataclass
@@ -56,6 +63,17 @@ def _setup_twilio():
     twilio = TwilioCredentials(**twilio_json)
 
 
+def _setup_imgur():
+    """
+    Set up the TwilioCredentials global instance.
+    """
+    global imgur
+    imgur_fl = os.path.join(cfg.LOCAL_DIR, 'imgur.json')
+    with open(imgur_fl, 'r') as f:
+        imgur_json = json.load(f)
+    imgur = ImgurCredentials(**imgur_json)
+
+
 def _setup_user():
     """
     Set up the UserData global instance.
@@ -69,4 +87,5 @@ def _setup_user():
 
 _setup_mint()
 _setup_twilio()
+_setup_imgur()
 _setup_user()
