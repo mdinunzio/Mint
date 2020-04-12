@@ -33,6 +33,6 @@ class AuthManager():
 
 
 mint = AuthManager('mint.json')
-twilio = mint = AuthManager('twilio.json')
+twilio = AuthManager('twilio.json')
 imgur = AuthManager('imgur.json')
 user_data = AuthManager('user_data.json')

@@ -11,7 +11,7 @@ class SmsManager():
         self.client = Client(self.account_sid,
                              self.auth_token)
 
-    def send(self, body, to=None, media_url=None):
+    def send(self, body=None, media_url=None, to=None):
         if to is None:
             to = authapi.user_data.number
         self.message = self.client.messages.create(

@@ -3,13 +3,10 @@ import scrapekit
 import finances
 import sms
 import time
-import pandas as pd
 import datetime
 import argparse
-import requests
 import os
-import base64
-import authapi
+import imgur
 
 
 def refresh_accounts_and_kill():
@@ -60,22 +57,10 @@ def send_daily_update():
     tmgr.plot_spending(month=today.month, year=today.year, appdata=True)
     plot_loc = os.path.join(cfg.DATA_DIR, 'spending.png')
     # Upload image
-    f = open(plot_loc, 'rb')
-    img = f.read()
-    b64 = base64.b64encode(img)
-    data = {
-        'image': b64,
-        'type': 'base64',
-    }
-    headers = {
-        'Authorization': f'Client-ID {authapi.imgur.client_id}'
-        }
-    response = requests.post(url=r'https://api.imgur.com/3/upload',
-                             data=data,
-                             headers=headers)
-    media_url = response.json()['data']['link']
-    sm.send(send_str)
-    sm.send(body=None, media_url=media_url)
+    imgur_mgr = imgur.ImgurManager()
+    media_url = imgur_mgr.upload_image(plot_loc)
+    sm.send(body=send_str)
+    sm.send(media_url=media_url)
 
 
 if __name__ == "__main__":
