@@ -60,6 +60,7 @@ def send_daily_update():
     imgur_mgr = imgur.ImgurManager()
     media_url = imgur_mgr.upload_image(plot_loc)
     sm.send(body=send_str)
+    time.sleep(30)
     sm.send(media_url=media_url)
 
 
