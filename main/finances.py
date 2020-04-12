@@ -156,7 +156,7 @@ class TransactionManager():
         """
         Return a DataFrame containing an n-day summary of
         discretionary spending.
-        Optionally return the count of tranactions.
+        Optionally return the count of transactions.
         """
         today = datetime.date.today()
         tmn = today - datetime.timedelta(days=n)
@@ -321,7 +321,8 @@ class TransactionManager():
         rem_per_day = remaining / days_left
         return spent, remaining, spent_per_day, rem_per_day
 
-    def graph_discretionary(self, start_date=None, end_date=None):
+    def graph_discretionary(self, start_date=None, end_date=None,
+                            appdata=False):
         """
         Graph discretionary spending by day for a given time period.
         """
@@ -345,10 +346,13 @@ class TransactionManager():
         ax.xaxis_date()
         plt.xticks(rotation=90)
         plt.tight_layout()
-        plt.savefig(cfg.DT_DIR + r'\spending.png')
+        if appdata:
+            plt.savefig(cfg.DATA_DIR + r'\spending.png')
+        else:
+            plt.savefig(cfg.DT_DIR + r'\spending.png')
         plt.close()
 
-    def plot_spending(self, month, year):
+    def plot_spending(self, month, year, appdata=False):
         if month is None:
             month = datetime.date.today().month
         if year is None:
@@ -381,9 +385,12 @@ class TransactionManager():
         plt.xticks(rotation=45)
         ax.xaxis.set_major_locator(mdates.DayLocator(interval=5))
         plt.tight_layout()
-        plt.savefig(cfg.DT_DIR + r'\spending.png')
+        if appdata:
+            plt.savefig(cfg.DATA_DIR + r'\spending.png')
+        else:
+            plt.savefig(cfg.DT_DIR + r'\spending.png')
         plt.close()
 
     def __repr__(self):
         max_date = self.df['Date'].max()
-        return f'Tranasactions up to {max_date}'
+        return f'Transactions up to {max_date}'

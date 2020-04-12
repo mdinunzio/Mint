@@ -1,91 +1,38 @@
 import config as cfg
 import json
 import os
-import sys
-import getpass
-from dataclasses import dataclass
 
 
-# SETUP ######################################################################
+class AuthManager():
+    def __init__(self, json_file=None):
+        self.username = None
+        self.password = None
+        self.client_id = None
+        self.token = None
+        self.email = None
+        self.number = None
+        if json_file is None:
+            return
+        json_path = os.path.join(cfg.LOCAL_DIR, json_file)
+        self.init_with_file(json_path)
 
-mint = None
-twilio = None
-imgur = None
-user_data = None
+    def init_with_file(self, json_path):
+        with open(json_path, 'r') as f:
+            self.auth_dict = json.load(f)
+        for k, v in self.auth_dict.items():
+            setattr(self, k, v)
 
+    def __str__(self):
+        ret = ''
+        for k, v in self.auth_dict.items():
+            ret += f'{k}: {v}\n'
+        return ret
 
-# MAIN #######################################################################
-
-# Objects
-@dataclass
-class MintCredentials:
-    email: str
-    password: str
-
-
-@dataclass
-class TwilioCredentials:
-    account_sid: str
-    auth_token: str
-    number: str
-
-
-@dataclass
-class ImgurCredentials:
-    client_id: str
-    client_secret: str
-
-
-@dataclass
-class UserData:
-    number: str
+    def __repr__(self):
+        return self.__str__()
 
 
-def _setup_mint():
-    """
-    Set up the MintCredentials global instance.
-    """
-    global mint
-    mint_fl = os.path.join(cfg.LOCAL_DIR, 'mint.json')
-    with open(mint_fl, 'r') as f:
-        mint_json = json.load(f)
-    mint = MintCredentials(**mint_json)
-
-
-def _setup_twilio():
-    """
-    Set up the TwilioCredentials global instance.
-    """
-    global twilio
-    twilio_fl = os.path.join(cfg.LOCAL_DIR, 'twilio.json')
-    with open(twilio_fl, 'r') as f:
-        twilio_json = json.load(f)
-    twilio = TwilioCredentials(**twilio_json)
-
-
-def _setup_imgur():
-    """
-    Set up the TwilioCredentials global instance.
-    """
-    global imgur
-    imgur_fl = os.path.join(cfg.LOCAL_DIR, 'imgur.json')
-    with open(imgur_fl, 'r') as f:
-        imgur_json = json.load(f)
-    imgur = ImgurCredentials(**imgur_json)
-
-
-def _setup_user():
-    """
-    Set up the UserData global instance.
-    """
-    global user_data
-    user_fl = os.path.join(cfg.LOCAL_DIR, 'user_data.json')
-    with open(user_fl, 'r') as f:
-        user_json = json.load(f)
-    user_data = UserData(**user_json)
-
-
-_setup_mint()
-_setup_twilio()
-_setup_imgur()
-_setup_user()
+mint = AuthManager('mint.json')
+twilio = mint = AuthManager('twilio.json')
+imgur = AuthManager('imgur.json')
+user_data = AuthManager('user_data.json')
