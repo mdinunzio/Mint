@@ -365,6 +365,13 @@ class TransactionManager():
         discr = discr[discr['Date'] >= start_date]
         discr = discr[discr['Date'] <= end_date]
         discr_dly = discr.groupby('Date')[['Amount']].sum()
+        latest_date = max(datetime.date.today(), discr_dly.index.max())
+        latest_date = min(latest_date, end_date)
+        lhs = pd.DataFrame(columns=['Date'],
+                           data=pd.date_range(start_date, latest_date))
+        lhs['Date'] = lhs['Date'].map(lambda x: x.date())
+        discr_dly = pd.merge(lhs, discr_dly, how='left', on='Date')
+        discr_dly['Amount'] = discr_dly['Amount'].fillna(0)
         discr_dly['Amount'] = discr_dly['Amount'].cumsum()
         discr_dly['Amount'] *= -1
         discr_dly = discr_dly.reset_index()
