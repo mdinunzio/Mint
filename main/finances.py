@@ -374,10 +374,9 @@ class TransactionManager():
         discr_dly['Amount'] = discr_dly['Amount'].fillna(0)
         discr_dly['Amount'] = discr_dly['Amount'].cumsum()
         discr_dly['Amount'] *= -1
-        discr_dly = discr_dly.reset_index()
         cash_ws = get_cash_flow_sheet()
         cash_ws = cash_ws.set_index('Item')
-        discr_inc = cash_ws.loc['Discretionary', 'Remaining']
+        discr_inc = cash_ws.loc['Recurring', 'Remaining']
         discr_inc_dly = pd.DataFrame(
             data=zip(pd.date_range(start_date, end_date),
                      [discr_inc / days] * days),
