@@ -2,11 +2,12 @@ import authapi
 import time
 import os
 import re
-import shutil
+import sys
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
 
 
 # URLS
@@ -41,14 +42,21 @@ class MintScraper():
     def await_element(self, criteria,
                       by_type=By.CSS_SELECTOR,
                       ec_type=EC.element_to_be_clickable,
-                      timeout=300):
+                      timeout=300,
+                      fatal=True):
         """
         Return an element on a page after it has finished rendering.
         """
-        wdw = WebDriverWait(self.driver, timeout)
-        ec = ec_type((by_type, criteria))
-        element = wdw.until(ec)
-        return element
+        try:
+            wdw = WebDriverWait(self.driver, timeout)
+            ec = ec_type((by_type, criteria))
+            element = wdw.until(ec)
+            return element
+        except TimeoutException:
+            print('TimeoutException: Element not found.')
+            if fatal:
+                self.driver.quit()
+                sys.exit(1)
 
     def login(self):
         """
