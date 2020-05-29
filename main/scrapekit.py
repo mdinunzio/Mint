@@ -58,48 +58,79 @@ class MintScraper():
                 self.driver.quit()
                 sys.exit(1)
 
+    def find_element(self, criteria):
+        """
+        Return an element if it exists, otherwise return None.
+        """
+        elements = self.driver.find_elements(By.CSS_SELECTOR, criteria)
+        if len(elements) > 0:
+            return elements[0]
+        else:
+            return None
+            
+    def jsclick(self, element, fatal=True):
+        """
+        Click an element using javascript
+        (avoids ElementClickInterceptedException).
+        """
+        try:
+            js = 'arguments[0].click();'
+            self.driver.execute_script(js, element)
+        except Exception as e:
+            print(e)
+            if fatal:
+                self.driver.quit()
+                sys.exit(1)
+
     def login(self):
         """
         Sign in to Mint.com
         """
         self.driver.get(f'{MINT_URL}')
         sign_in_link = self.await_element("a[aria-label='Sign in']")
-        sign_in_link.click()
+        self.jsclick(sign_in_link)
         email_form = self.await_element('#ius-userid')
         email_form.send_keys(authapi.mint.email)
         pw_form = self.await_element('#ius-password')
         pw_form.send_keys(authapi.mint.password)
         sign_in_btn = self.await_element('#ius-sign-in-submit-btn')
-        sign_in_btn.click()
+        self.jsclick(sign_in_btn)
         self.logged_in = True
 
     def refresh_accounts(self, login=None):
+        """
+        Refresh Mint's account data.
+        """
         if login is None:
             login = not self.logged_in
         if login:
             self.login()
         gear_btn = self.await_element('.actionsMenuIcon.icon.icon-gear-gray3')
         self.driver.execute_script("window.scrollTo(0, 250)")
-        gear_btn.click()
+        self.jsclick(gear_btn)
         refresh_elem = self.await_element('[data-action=refreshAccounts]')
-        refresh_elem.click()
+        self.jsclick(refresh_elem)
 
     def download_transactions(self, login=None):
+        """
+        Download Mint's transaction data.
+        """
         if login is None:
             login = not self.logged_in
         if login:
             self.login()
         trans_link = self.await_element('li#transaction > a')
-        trans_link.click()
+        self.jsclick(trans_link)
+        time.sleep(10)
+        alert_x = self.find_element("button[aria-label='Close']")
+        if alert_x is not None:
+            self.jsclick(alert_x, fatal=False)
         trans_exp = self.await_element('#transactionExport')
         time.sleep(10)
-        try:
-            bar_x = self.driver.find_element(
-                By.CSS_SELECTOR, '.x.icon.icon-x-white')
-            bar_x.click()
-        except Exception as e:
-            print(e)
-        trans_exp.click()
+        bar_x = self.find_element(".x.icon.icon-x-white")
+        if bar_x is not None:
+            self.jsclick(bar_x)
+        self.jsclick(trans_exp)
 
 
 # FUNCTIONS ##################################################################
