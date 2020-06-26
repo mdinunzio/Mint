@@ -29,7 +29,7 @@ INCOME_CAT = ['Income', 'Bonus', 'Interest Income', 'Paycheck',
               'Reimbursement', 'Rental Income', 'Returned Purchase']
 
 # Wash categories
-WASH_CAT = ['Credit Card Payment', 'Transfer']
+WASH_CAT = ['Credit Card Payment', 'Transfer', 'Investments']
 
 
 # FUNCTIONS #################################################################
