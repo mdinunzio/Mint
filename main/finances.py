@@ -365,7 +365,10 @@ class TransactionManager():
         discr = discr[discr['Date'] >= start_date]
         discr = discr[discr['Date'] <= end_date]
         discr_dly = discr.groupby('Date')[['Amount']].sum()
-        latest_date = max(datetime.date.today(), discr_dly.index.max())
+        discr_max = discr_dly.index.max()
+        if np.isnan(discr_max):
+            discr_max = pd.NaT
+        latest_date = max(datetime.date.today(), discr_max)
         latest_date = min(latest_date, end_date)
         lhs = pd.DataFrame(columns=['Date'],
                            data=pd.date_range(start_date, latest_date))
