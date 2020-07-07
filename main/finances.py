@@ -366,7 +366,7 @@ class TransactionManager():
         discr = discr[discr['Date'] <= end_date]
         discr_dly = discr.groupby('Date')[['Amount']].sum()
         discr_max = discr_dly.index.max()
-        if np.isnan(discr_max):
+        if not isinstance(discr_max, datetime.date):
             discr_max = pd.NaT
         latest_date = max(datetime.date.today(), discr_max)
         latest_date = min(latest_date, end_date)
