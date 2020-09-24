@@ -94,7 +94,6 @@ class GmailOuath2Manager():
 
 
 mint = AuthManager('mint.json')
-twilio = AuthManager('twilio.json')
 imgur = AuthManager('imgur.json')
 user_data = AuthManager('user_data.json')
 gmail = GmailOuath2Manager()

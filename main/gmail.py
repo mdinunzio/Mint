@@ -23,6 +23,7 @@ class EmailMessage():
         self.subject = subject
         if from_ is None:
             from_ = authapi.user_data.email
+        self.from_ = from_
         self.mode = mode
         self.images = images
         self.attachments = attachments
