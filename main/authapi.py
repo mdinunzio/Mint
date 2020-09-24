@@ -68,7 +68,7 @@ class GmailOuath2Manager():
 
         self.creds = creds
 
-    def setup_cred_file(self):
+    def setup_creds_file(self):
         """
         Generate the pickle file needed for Gmail API communication.
         """
