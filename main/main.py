@@ -64,7 +64,6 @@ def send_daily_update():
                              subject=subject,
                              images=[plot_loc])
     sms.send()
-    time.sleep(30)
 
 
 if __name__ == "__main__":
