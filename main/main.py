@@ -40,7 +40,7 @@ def send_daily_update():
         download_and_kill()
     except Exception as e:
         print(e)
-        subprocess.call(['taskkill', '/f', '/im', 'chrome'])
+        subprocess.call(['taskkill', '/f', '/im', 'chrome*'])
         download_and_kill()
     tmgr = finances.TransactionManager()
     # Get 5-Day stats
