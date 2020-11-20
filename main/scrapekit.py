@@ -3,6 +3,7 @@ import time
 import os
 import re
 import sys
+import psutil
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -33,11 +34,24 @@ class MintScraper():
         self.opt_dir = os.path.join(
             USER_DIR,
             r'AppData\Local\Google\Chrome\User Data\Default')
+        try:
+            self.start_driver()
+        except Exception as e:
+            print(e)
+            self.taskkill('chrome')
+            self.start_driver()
+
+    def start_driver(self):
         options = webdriver.ChromeOptions()
         options.add_argument(f"user-data-dir={self.opt_dir}")
         self.driver = webdriver.Chrome(DRIVER_LOC, options=options)
         self.driver.maximize_window()
         self.logged_in = False
+
+    def taskkill(self, imgname):
+        procs = [x for x in psutil.process_iter() if imgname in x.name()]
+        for p in procs:
+            p.kill()
 
     def await_element(self, criteria,
                       by_type=By.CSS_SELECTOR,

@@ -8,7 +8,6 @@ import argparse
 import os
 import imgur
 import authapi
-import subprocess
 
 
 def refresh_accounts_and_kill():
@@ -36,12 +35,13 @@ def send_daily_update():
     Download the most recent record of transactions and
     send a 5-day summary via SMS.
     """
-    try:
-        download_and_kill()
-    except Exception as e:
-        print(e)
-        subprocess.call(['taskkill', '/f', '/im', 'chrome*'])
-        download_and_kill()
+    download_and_kill()
+#     try:
+#         download_and_kill()
+#     except Exception as e:
+#         print(e)
+#         subprocess.call(['taskkill', '/f', '/im', 'chrome*'])
+#         download_and_kill()
     tmgr = finances.TransactionManager()
     # Get 5-Day stats
     spend_smry, spend_count = tmgr.get_spending_by_day(
