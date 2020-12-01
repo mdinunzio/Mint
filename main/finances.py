@@ -68,7 +68,12 @@ def get_cash_flow_structure(recur_mgr):
 
 def get_days_in_month(month, year):
     start_of_month = datetime.date(year, month, 1)
-    next_start_of_month = datetime.date(year, month + 1, 1)
+    next_month = month + 1
+    next_year = year
+    if next_month == 13:
+        next_month = 1
+        next_year = year + 1
+    next_start_of_month = datetime.date(next_year, next_month, 1)
     tdelta = next_start_of_month - start_of_month
     return tdelta.days
 
