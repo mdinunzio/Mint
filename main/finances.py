@@ -66,15 +66,23 @@ def get_cash_flow_structure(recur_mgr):
     return cf_structure
 
 
-def get_days_in_month(month, year):
-    start_of_month = datetime.date(year, month, 1)
+def get_next_month_start(month, year):
+    """
+    Return the date of the next month's first day.
+    """
     next_month = month + 1
     next_year = year
     if next_month == 13:
         next_month = 1
         next_year = year + 1
-    next_start_of_month = datetime.date(next_year, next_month, 1)
-    tdelta = next_start_of_month - start_of_month
+    next_month_start = datetime.date(next_year, next_month, 1)
+    return next_month_start
+
+
+def get_days_in_month(month, year):
+    curr_month_start = datetime.date(year, month, 1)
+    next_start_of_month = get_next_month_start(month, year)
+    tdelta = next_start_of_month - curr_month_start
     return tdelta.days
 
 
@@ -363,9 +371,9 @@ class TransactionManager():
         if year is None:
             year = datetime.date.today().year
         start_date = datetime.date(year, month, 1)
-        next_start = datetime.date(year, month + 1, 1)
+        next_start = get_next_month_start(month, year)
         end_date = next_start - datetime.timedelta(days=1)
-        days = (next_start - start_date).days
+        days = get_days_in_month(month, year)
         discr = self.df[self.df['Group'] == 'Discretionary']
         discr = discr[discr['Date'] >= start_date]
         discr = discr[discr['Date'] <= end_date]
