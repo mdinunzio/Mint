@@ -56,7 +56,7 @@ def get_cash_flow_structure(recur_mgr):
                        'Rental Income', 'Returned Purchase', 'Income']
     income_sg = paycheck_sg + other_income_sg
     income_pairs = [('Income', sg) for sg in income_sg]
-    rent_pairs = [('Mortgage & Rent', 'Mortgage & Rent')]
+    rent_pairs = [('Rent', 'Mortgage & Rent')]
     recurring_pairs = [('Recurring', sg) for sg in
                        recur_mgr.df['Subgroup'].tolist()]
     disc_pairs = [('Discretionary', 'Discretionary')]
@@ -295,8 +295,7 @@ class TransactionManager():
         last_idx = [x[1] for x in cf_smry.index if x[0] == 'Income'][-1]
         cf_smry.loc[('Income', last_idx), 'Remaining'] = income_rem
         # Remaining after rent
-        proj_rent = cf_smry.loc[
-            ('Mortgage & Rent', 'Mortgage & Rent'), 'Projected']
+        proj_rent = cf_smry.loc[('Rent', 'Mortgage & Rent'), 'Projected']
         rent_rem = income_rem + proj_rent
         cf_smry.loc['Mortgage & Rent', 'Remaining'] = rent_rem
         # Remaining after recurring
