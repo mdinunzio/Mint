@@ -1,13 +1,12 @@
 import config as cfg
-import scrapekit
-import finances
-import gmail
+from mintkit.scraper import scrapekit
+from mintkit.analysis import finances
+from mintkit.comm import gmail
 import time
 import datetime
 import argparse
 import os
-import imgur
-import authapi
+from mintkit.auth import authapi
 
 
 def refresh_accounts_and_kill():

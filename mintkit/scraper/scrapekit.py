@@ -1,4 +1,4 @@
-import authapi
+from mintkit.auth import authapi
 import time
 import os
 import re
