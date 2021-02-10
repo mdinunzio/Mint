@@ -1,4 +1,14 @@
+import mintkit.utils.logging
+import mintkit.utils.paths
 import os
+import pandas as pd
+
+PROJECT_NAME = 'MintKit'
+
+# logging setup
+
+pd.set_option('display.max_columns', 500)
+pd.set_option('display.width', 1000)
 
 # File locations
 THIS_LOC = __file__

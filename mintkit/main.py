@@ -1,6 +1,6 @@
 import config as cfg
 from mintkit.scraper import scrapekit
-from mintkit.analysis import finances
+from mintkit.core import finances
 from mintkit.comm import gmail
 import time
 import datetime
