@@ -97,3 +97,10 @@ mint = AuthManager('mint.json')
 imgur = AuthManager('imgur.json')
 user_data = AuthManager('user_data.json')
 gmail = GmailOuath2Manager()
+
+
+def get_username():
+    """Return the OS username.
+
+    """
+
