@@ -13,7 +13,10 @@ class Path(str):
 
         """
         super().__init__()
-        self._path = os.path.normpath(path)
+        if isinstance(path, Path):
+            self._path = os.path.normpath(path._path)
+        elif isinstance(path, str):
+            self._path = os.path.normpath(path)
 
     def split(self):
         """Return a list of strings of Path components.
@@ -94,7 +97,7 @@ class Path(str):
         if len(components) == 0:
             raise ValueError('Invalid path.')
         # Get longest existing path
-        curr_path = components.pop(0)
+        curr_path = Path(components.pop(0))
         while os.path.isdir(curr_path):
             curr_path = curr_path + components.pop(0)
         if len(components) >= max_depth:

@@ -10,16 +10,16 @@ import warnings
 logging.getLogger().setLevel(logging.NOTSET)
 
 _log_settings = {'default_logger': None,
-                 'logging_directory': None,
+                 'logging_directory': '',
                  'debug_mode': False}
 _loggers = dict()
 
 
-def set_log_path(log_path):
+def set_logging_directory(log_path):
     """Set the log path for the project.
 
     """
-    _log_settings['logging_directory'] = log_path
+    _log_settings['logging_directory'] = str(log_path)
 
 
 def set_debug_mode(debug_mode):

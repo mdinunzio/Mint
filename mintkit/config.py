@@ -22,7 +22,7 @@ if not paths.logs.exists():
 DEBUG = os.environ.get('MINTKITDEBUG') == 1
 
 # logging setup
-mintkit.utils.logging.set_log_path(paths.logs)
+mintkit.utils.logging.set_logging_directory(paths.logs)
 mintkit.utils.logging.set_debug_mode(DEBUG)
 log = mintkit.utils.logging.get_logger(PROJECT_NAME)
 
