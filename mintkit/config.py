@@ -10,8 +10,16 @@ paths = mintkit.utils.paths.PathManager()
 paths.base = mintkit.utils.paths.Path(__file__) + '..'
 paths.home = mintkit.utils.paths.Path(os.path.expanduser('~'))
 paths.desktop = paths.home + 'Desktop'
-paths.appdata = paths.home + 'AppData' + 'Local' + PROJECT_NAME
+paths.downloads = paths.home + 'Downloads'
+paths.local = paths.home + 'AppData' + 'Local'
+paths.appdata = paths.local + PROJECT_NAME
 paths.logs = paths.appdata + 'logs'
+paths.user = paths.appdata + paths.home[-1]
+paths.x86 = mintkit.utils.paths.Path(r"C:\Program Files (x86)")
+paths.chrome = paths.x86 + r'Google\Chrome\Application\chrome.exe'
+paths.chrome_profile = paths.local + r'Google\Chrome\User Data\Default'
+paths.chromedriver = paths.x86 + r'chromedriver_win32\chromedriver.exe'
+
 # path creation
 if not paths.appdata.exists():
     paths.appdata.create()

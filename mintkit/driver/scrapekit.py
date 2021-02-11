@@ -1,65 +1,111 @@
+import mintkit.config as cfg
+import mintkit.utils.logging
 from mintkit.auth import authapi
-import time
-import os
-import re
-import sys
-import psutil
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
+import time
+import os
+import re
+import sys
+import psutil
 
+
+# Get logger
+log = mintkit.utils.logging.get_logger(cfg.PROJECT_NAME)
 
 # URLS
 MINT_URL = r'https://www.mint.com'
 
-# Paths
-DRIVER_LOC = r'C:\Program Files (x86)\chromedriver_win32\chromedriver.exe'
-USER_DIR = os.path.expanduser('~')
-DL_DIR = os.path.join(USER_DIR, 'Downloads')
-OPT_DIR = os.path.join(
-    USER_DIR, r'AppData\Local\Google\Chrome\User Data\Default')
-
 # Regular Expressions
-trans_pattern = r'transactions(?: \((?P<instance>\d+)\))?\.csv'
-trans_re = re.compile(trans_pattern)
+TRANSACT_PATTERN = r'transactions(?: \((?P<instance>\d+)\))?\.csv'
+TRANSACT_RE = re.compile(TRANSACT_PATTERN)
 
 
-# MODELS #####################################################################
+# HELPER FUNCTIONS ############################################################
+
+def _sort_files(x):
+    """Return the sort key index for a transaction file.
+
+    """
+    match = TRANSACT_RE.match(x)
+    if match['instance']:
+        return int(match['instance'])
+    else:
+        return 0
+
+
+def get_latest_file_location():
+    """Return a string representing the location of the most
+    recently downloaded transactions file.
+
+    """
+    dl_files = os.listdir(cfg.paths.downloads)
+    trans_files = [x for x in dl_files if TRANSACT_RE.match(x)]
+    trans_files.sort(key=_sort_files, reverse=True)
+    trans_file = trans_files[0]
+    return cfg.paths.downloads + trans_file
+
+
+def delete_all_transaction_files():
+    """
+    Delete all transactions files in the Downloads folder.
+    """
+    dl_files = os.listdir(cfg.paths.downloads)
+    trans_files = [x for x in dl_files if TRANSACT_RE.match(x)]
+    for f in trans_files:
+        try:
+            fl_path = cfg.paths.downloads + f
+            os.remove(str(fl_path))
+        except Exception as e:
+            print(e)
+
+
+def taskkill(image_name):
+    """Kill a task with the given image name.
+
+    """
+    procs = [x for x in psutil.process_iter() if image_name in x.name()]
+    for p in procs:
+        p.kill()
+
+
+# MODELS ######################################################################
 
 class MintScraper():
     def __init__(self):
-        self.username = USER_DIR.split('\\')[-1]
-        self.opt_dir = os.path.join(
-            USER_DIR,
-            r'AppData\Local\Google\Chrome\User Data\Default')
+        """A tool for scraping Mint webpages.
+
+        """
+        self.username = cfg.paths.home[-1]
+        self.profile = cfg.paths.chrome_profile
+        self.driver = None
+        self.logged_in = False
         try:
             self.start_driver()
         except Exception as e:
             print(e)
-            self.taskkill('chrome')
+            taskkill('chrome')
             self.start_driver()
 
     def start_driver(self):
-        options = webdriver.ChromeOptions()
-        options.add_argument(f"user-data-dir={self.opt_dir}")
-        self.driver = webdriver.Chrome(DRIVER_LOC, options=options)
-        self.driver.maximize_window()
-        self.logged_in = False
+        """Start the chromedriver.
 
-    def taskkill(self, imgname):
-        procs = [x for x in psutil.process_iter() if imgname in x.name()]
-        for p in procs:
-            p.kill()
+        """
+        options = webdriver.ChromeOptions()
+        options.add_argument(f"user-data-dir={self.profile}")
+        self.driver = webdriver.Chrome(cfg.paths.chromedriver, options=options)
+        self.driver.maximize_window()
 
     def await_element(self, criteria,
                       by_type=By.CSS_SELECTOR,
                       ec_type=EC.element_to_be_clickable,
                       timeout=300,
                       fatal=True):
-        """
-        Return an element on a page after it has finished rendering.
+        """Return an element on a page after it has finished rendering.
+
         """
         try:
             wdw = WebDriverWait(self.driver, timeout)
@@ -73,8 +119,8 @@ class MintScraper():
                 sys.exit(1)
 
     def find_element(self, criteria):
-        """
-        Return an element if it exists, otherwise return None.
+        """Return an element if it exists, otherwise return None.
+
         """
         elements = self.driver.find_elements(By.CSS_SELECTOR, criteria)
         if len(elements) > 0:
@@ -83,9 +129,9 @@ class MintScraper():
             return None
             
     def jsclick(self, element, fatal=True):
-        """
-        Click an element using javascript
+        """Click an element using javascript
         (avoids ElementClickInterceptedException).
+
         """
         try:
             js = 'arguments[0].click();'
@@ -97,8 +143,8 @@ class MintScraper():
                 sys.exit(1)
 
     def login(self):
-        """
-        Sign in to Mint.com
+        """Sign in to Mint.com
+
         """
         self.driver.get(f'{MINT_URL}')
         sign_in_link = self.await_element("a[aria-label='Sign in']")
@@ -112,8 +158,8 @@ class MintScraper():
         self.logged_in = True
 
     def refresh_accounts(self, login=None):
-        """
-        Refresh Mint's account data.
+        """Refresh Mint's account data.
+
         """
         if login is None:
             login = not self.logged_in
@@ -126,8 +172,8 @@ class MintScraper():
         self.jsclick(refresh_elem)
 
     def download_transactions(self, login=None):
-        """
-        Download Mint's transaction data.
+        """Download Mint's transaction data.
+
         """
         if login is None:
             login = not self.logged_in
@@ -145,42 +191,3 @@ class MintScraper():
         if bar_x is not None:
             self.jsclick(bar_x)
         self.jsclick(trans_exp)
-
-
-# FUNCTIONS ##################################################################
-
-def _sort_files(x):
-    """
-    Return the sort key index for a transaction file.
-    """
-    mtch = trans_re.match(x)
-    if mtch['instance']:
-        return int(mtch['instance'])
-    else:
-        return 0
-
-
-def get_latest_file_location():
-    """
-    Return a string representing the location of the most recently
-    downloaded transactions file.
-    """
-    dl_files = os.listdir(DL_DIR)
-    trans_files = [x for x in dl_files if trans_re.match(x)]
-    trans_files.sort(key=_sort_files, reverse=True)
-    trans_file = trans_files[0]
-    return os.path.join(DL_DIR, trans_file)
-
-
-def delete_all_tranaction_files():
-    """
-    Delete all transactions files in the Downloads folder.
-    """
-    dl_files = os.listdir(DL_DIR)
-    trans_files = [x for x in dl_files if trans_re.match(x)]
-    for f in trans_files:
-        try:
-            fl_path = os.path.join(DL_DIR, f)
-            os.remove(fl_path)
-        except Exception as e:
-            print(e)

@@ -15,6 +15,16 @@ _log_settings = {'default_logger': None,
 _loggers = dict()
 
 
+def _excepthook_custom(exc_type, exc_value, traceback_):
+    """Use  to replace sys.excepthook.
+
+    """
+    _log_settings['default_logger'].error(
+        'uncaught exception',
+        exc_info=(exc_type, exc_value, traceback_)
+    )
+
+
 def set_logging_directory(log_path):
     """Set the log path for the project.
 
@@ -34,6 +44,7 @@ def set_default_logger(logger):
 
     """
     _log_settings['default_logger'] = logger
+    sys.excepthook = _excepthook_custom
 
 
 def get_username():
@@ -80,7 +91,7 @@ def _setup_logger(logger_name):
     logger.info(f'Logger "{logger_name}" initialized.')
 
     # Add to loggers
-    _log_settings[logger_name] = logger
+    _loggers[logger_name] = logger
     if _log_settings['default_logger'] is None:
         set_default_logger(logger)
 
