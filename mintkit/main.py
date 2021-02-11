@@ -1,6 +1,6 @@
 import config as cfg
 from mintkit.scraper import scrapekit
-from mintkit.core import finances
+from mintkit.core import analytics
 from mintkit.comm import gmail
 import time
 import datetime
@@ -41,7 +41,7 @@ def send_daily_update():
 #         print(e)
 #         subprocess.call(['taskkill', '/f', '/im', 'chrome*'])
 #         download_and_kill()
-    tmgr = finances.TransactionManager()
+    tmgr = analytics.TransactionManager()
     # Get 5-Day stats
     spend_smry, spend_count = tmgr.get_spending_by_day(
         n=5, total=False, count=True)

@@ -15,6 +15,7 @@ paths.local = paths.home + 'AppData' + 'Local'
 paths.appdata = paths.local + PROJECT_NAME
 paths.logs = paths.appdata + 'logs'
 paths.user = paths.appdata + paths.home[-1]
+paths.creds = paths.user + 'creds'
 paths.x86 = mintkit.utils.paths.Path(r"C:\Program Files (x86)")
 paths.chrome = paths.x86 + r'Google\Chrome\Application\chrome.exe'
 paths.chrome_profile = paths.local + r'Google\Chrome\User Data\Default'
@@ -25,6 +26,8 @@ if not paths.appdata.exists():
     paths.appdata.create()
 if not paths.logs.exists():
     paths.logs.create()
+if not paths.creds.exists():
+    paths.creds.create()
 
 # debug settings
 DEBUG = os.environ.get('MINTKITDEBUG') == 1
@@ -37,4 +40,3 @@ log = mintkit.utils.logging.get_logger(PROJECT_NAME)
 # pandas setup
 pd.set_option('display.max_columns', 500)
 pd.set_option('display.width', 1000)
-

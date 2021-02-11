@@ -11,18 +11,30 @@ logging.getLogger().setLevel(logging.NOTSET)
 
 _log_settings = {'default_logger': None,
                  'logging_directory': '',
-                 'debug_mode': False}
+                 'debug_mode': False,
+                 'email': False}
 _loggers = dict()
 
 
 def _excepthook_custom(exc_type, exc_value, traceback_):
-    """Use  to replace sys.excepthook.
+    """Use to replace sys.excepthook.
 
     """
     _log_settings['default_logger'].error(
         'uncaught exception',
         exc_info=(exc_type, exc_value, traceback_)
     )
+
+
+def _showwarning_custom(message, category, filename, lineno, file=None,
+                        line=None):
+    """Use to replace warnings.showwarning.
+
+    """
+    msg = warnings.WarningMessage(message, category, filename,
+                                  lineno, file, line)
+    text = warnings._formatwarnmsg_impl(msg)
+    _log_settings['default_logger'].warn(text)
 
 
 def set_logging_directory(log_path):

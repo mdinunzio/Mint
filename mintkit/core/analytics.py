@@ -17,7 +17,6 @@ pd.set_option('display.width', 1000)
 
 sns.set()
 
-
 # File locations
 FIN_LOC = os.path.join(cfg.LOCAL_DIR, 'finances.json')
 with open(FIN_LOC, 'r') as f:
