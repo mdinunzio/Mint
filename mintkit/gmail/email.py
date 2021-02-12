@@ -1,3 +1,10 @@
+"""A simple module for sending emails.
+
+Notes:
+https://code.activestate.com/recipes/473810/
+
+"""
+
 import authapi
 import base64
 import googleapiclient.discovery
@@ -7,8 +14,6 @@ from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email.mime.image import MIMEImage
 
-
-# https://code.activestate.com/recipes/473810/
 
 class EmailMessage():
     """

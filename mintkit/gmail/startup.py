@@ -29,7 +29,7 @@ def create_credentials_pickle(json_path):
               'https://www.googleapis.com/auth/gmail.modify']
     flow = InstalledAppFlow.from_client_secrets_file(json_path, SCOPES)
     creds = flow.run_local_server(port=0)
-    pickle_path = cfg.paths.user + 'gmail.pickle'
+    pickle_path = cfg.paths.creds + 'gmail.pickle'
     with open(pickle_path, 'wb') as token:
         pickle.dump(creds, token)
     log.info('Finished creating gmail credentials pickle file:')
