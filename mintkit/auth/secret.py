@@ -52,7 +52,7 @@ class Secret:
         key = key.encode('utf-8')
         cipher = Crypto.Cipher.AES.new(
             key=key, mode=Crypto.Cipher.AES.MODE_EAX, nonce=self.nonce)
-        plaintext = cipher.decrypt(ciphertext)
+        plaintext = cipher.decrypt(self.ciphertext)
         self.plaintext = plaintext.decode('utf-8')
         self.nonce = b''
         self.ciphertext = b''
