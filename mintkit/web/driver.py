@@ -44,7 +44,7 @@ def get_chrome_version():
 
 # MODELS ######################################################################
 
-class WebDriver():
+class WebDriver:
     def __init__(self):
         """A tool for traversing webpages.
 

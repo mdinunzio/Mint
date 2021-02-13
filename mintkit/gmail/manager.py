@@ -34,3 +34,25 @@ def create_credentials_pickle(json_path):
         pickle.dump(creds, token)
     log.info('Finished creating gmail credentials pickle file:')
     log.info(pickle_path)
+
+
+def setup_gmail_credentials():
+    """Interactively setup Gmail credentials.
+
+    """
+    print('Please enable the gmail API for your account.')
+    print('1. Click "Enable the Gmail API" on the webpage that opens.')
+    print('2. Name the project "MintKit".')
+    print('3. Configure the project as a "Desktop App".')
+    print('4. Click "DOWNLOAD CLIENT CONFIGURATION".')
+    open_enable_api_page()
+    print('5. After downloading, please provide the path the the file below.')
+    file_path = input('Configuration file path: ')
+    while not os.path.isfile(file_path):
+        print('File path not valid')
+        file_path = input('Configuration file path: ')
+    create_credentials_pickle(file_path)
+    print('6. In the webpage that opens click "Advanced" at the bottom left.')
+    print('7. Click "Go to Quickstart (unsafe)".')
+    print('8. Click "Allow".')
+    print('Gmail credential setup complete.')

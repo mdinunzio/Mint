@@ -9,19 +9,6 @@ import pickle
 log = mintkit.utils.logging.get_logger(cfg.PROJECT_NAME)
 
 
-def load_secret(name=None, secret_path=None):
-    """Load a secret from a file.
-
-    """
-    if name is not None:
-        secret_path = cfg.paths.creds + f'{name}.sec'
-    elif secret_path is None:
-        raise ValueError('Must pass either name or secret_path parameter.')
-    with open(secret_path, 'rb') as file:
-        secret = pickle.load(file)
-    return secret
-
-
 class Secret:
     def __init__(self, name, plaintext):
         """A class to save and protect client secrets.
@@ -96,3 +83,16 @@ class Secret:
             ret += ' (decrypted)\n'
             ret += f'Plaintext:\n{self.plaintext}'
         return ret
+
+
+def from_file(name=None, directory=None):
+    """Load a secret from a file.
+
+    """
+    if name is not None:
+        directory = cfg.paths.creds + f'{name}.sec'
+    elif directory is None:
+        raise ValueError('Must pass either name or directory parameter.')
+    with open(directory, 'rb') as file:
+        secret = pickle.load(file)
+    return secret
