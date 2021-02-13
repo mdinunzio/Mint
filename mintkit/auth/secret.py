@@ -2,7 +2,7 @@ import mintkit.config as cfg
 import mintkit.utils.logging
 import mintkit.utils.paths
 import Crypto.Cipher.AES
-import json
+import hashlib
 import pickle
 
 
@@ -32,15 +32,17 @@ class Secret:
         self.encrypted = False
         self.nonce = b''
         self.ciphertext = b''
+        self.tag = b''
 
     def encrypt(self, key):
         """Encrypt the data.
 
         """
         key = key.encode('utf-8')
+        hash_ = hashlib.md5(key).digest()
         plaintext = self.plaintext.encode('utf-8')
-        cipher = Crypto.Cipher.AES.new(key, Crypto.Cipher.AES.MODE_EAX)
-        self.ciphertext = cipher.encrypt_and_digest(plaintext)
+        cipher = Crypto.Cipher.AES.new(hash_, Crypto.Cipher.AES.MODE_EAX)
+        self.ciphertext, self.tag = cipher.encrypt_and_digest(plaintext)
         self.nonce = cipher.nonce
         self.plaintext = ''
         self.encrypted = True
@@ -50,12 +52,15 @@ class Secret:
 
         """
         key = key.encode('utf-8')
+        hash_ = hashlib.md5(key).digest()
         cipher = Crypto.Cipher.AES.new(
-            key=key, mode=Crypto.Cipher.AES.MODE_EAX, nonce=self.nonce)
+            key=hash_, mode=Crypto.Cipher.AES.MODE_EAX, nonce=self.nonce)
         plaintext = cipher.decrypt(self.ciphertext)
+        cipher.verify(self.tag)
         self.plaintext = plaintext.decode('utf-8')
         self.nonce = b''
         self.ciphertext = b''
+        self.tag = b''
         self.encrypted = False
 
     def save(self, name=None, directory=None):
@@ -74,3 +79,20 @@ class Secret:
         with open(path, 'wb') as file:
             pickle.dump(self, file)
 
+    def __str__(self):
+        """Represent as a string.
+
+        """
+        return f'Secret: {self.name}'
+
+    def __repr__(self):
+        """Represent in the console.
+
+        """
+        ret = f'Secret: {self.name}'
+        if self.encrypted:
+            ret += ' (encrypted)'
+        else:
+            ret += ' (decrypted)\n'
+            ret += f'Plaintext:\n{self.plaintext}'
+        return ret
