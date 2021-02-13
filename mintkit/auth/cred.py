@@ -3,6 +3,7 @@ import mintkit.utils.logging
 import mintkit.auth.secret
 import json
 
+
 log = mintkit.utils.logging.get_logger(cfg.PROJECT_NAME)
 
 
@@ -60,7 +61,7 @@ class Credential:
 
 
 def from_file(name, key, directory=None):
-    """Load a credential from a file.
+    """Load credentials from a file.
 
     """
     if directory is None:
