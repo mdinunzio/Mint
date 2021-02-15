@@ -1,41 +1,28 @@
-import config as cfg
-import scrapekit
+import mintkit.config as cfg
+import mintkit.utils.logging
+import mintkit.core.mint
 import pandas as pd
 import numpy as np
 import datetime
-import json
-import os
 import re
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
-import seaborn as sns
 
 
-pd.set_option('display.max_rows', 500)
-pd.set_option('display.max_columns', 500)
-pd.set_option('display.width', 1000)
+log = mintkit.utils.logging.get_logger(cfg.PROJECT_NAME)
 
-sns.set()
-
-# File locations
-FIN_LOC = os.path.join(cfg.LOCAL_DIR, 'finances.json')
-with open(FIN_LOC, 'r') as f:
-    FIN_JSON = json.load(f)
-CF_LOC = FIN_JSON['cf_loc']
 
 # Income categories
-INCOME_CAT = ['Income', 'Bonus', 'Interest Income', 'Paycheck',
-              'Reimbursement', 'Rental Income', 'Returned Purchase']
+INCOME = ['Income', 'Bonus', 'Interest Income', 'Paycheck', 'Reimbursement',
+          'Rental Income', 'Returned Purchase']
 
 # Wash categories
-WASH_CAT = ['Credit Card Payment', 'Transfer', 'Investments']
+WASH = ['Credit Card Payment', 'Transfer', 'Investments']
 
 
 # FUNCTIONS #################################################################
 
 def get_cash_flow_sheet():
-    """
-    Return a DataFrame of Cash FLow sheet format.
+    """Return a DataFrame of Cash FLow sheet format.
+
     """
     cfm = pd.read_excel(CF_LOC, usecols='A:E', header=5)
     cfm = cfm.rename(columns={'Unnamed: 0': 'Item'})
@@ -45,9 +32,9 @@ def get_cash_flow_sheet():
 
 
 def get_cash_flow_structure(recur_mgr):
-    """
-    Return a DataFrame with Groups and Subgroups that should be
+    """Return a DataFrame with Groups and Subgroups that should be
     left-mergeable with summaries derived from Transaction data.
+
     """
     # Get income pairs
     paycheck_sg = ['Middle-of-Month', 'End-of-Month']
@@ -66,8 +53,8 @@ def get_cash_flow_structure(recur_mgr):
 
 
 def get_next_month_start(month, year):
-    """
-    Return the date of the next month's first day.
+    """Return the date of the next month's first day.
+
     """
     next_month = month + 1
     next_year = year
@@ -79,90 +66,97 @@ def get_next_month_start(month, year):
 
 
 def get_days_in_month(month, year):
+    """Return the days in the given month.
+
+    """
     curr_month_start = datetime.date(year, month, 1)
     next_start_of_month = get_next_month_start(month, year)
     tdelta = next_start_of_month - curr_month_start
     return tdelta.days
 
 
-# MODELS #####################################################################
+def get_recurring(template_path=None):
+    """Return a dataframe of recurring transactions as outlined in
+    the template file.
 
-class RecurringManager():
-    def __init__(self):
-        # Recurring categories setup
-        df = pd.read_excel(CF_LOC,
-                           sheet_name="Dashboard",
-                           usecols="A:M")
-        col_map = {'Month': 'Subgroup',
-                   'Unnamed: 10': 'Column',
-                   'Unnamed: 11': 'Pattern'}
-        df = df.rename(columns=col_map)
-        df = df.dropna(subset=list(col_map.values()))
-        cols = ['Subgroup', 'Column', 'Pattern']
-        df = df[cols]
-        df = df.reset_index(drop=True)
-        self.df = df
+    """
+    if template_path is None:
+        template_path = cfg.paths.template
+    recurring = pd.read_excel(str(template_path),
+                              sheet_name='Recurring',
+                              skiprows=2)
+    recurring = recurring.dropna(subset=['Pattern'])
+    return  recurring
 
-    def get_subgroup(self, row):
-        """
-        Return the subgroup for a Transaction Manager's DataFrame
-        if the row corresponds to a recurring transaction, otherwise
-        return None
-        """
-        for _, (subgroup, column, pattern) in self.df.iterrows():
-            if re.match(pattern, row[column]):
-                return subgroup
-        return None
+
+def match_recurring(x, recurring):
+    """Return the subgroup of recurring transactions only.
+    Otherwise return None.
+
+    """
+    for _, (column, subgroup, pattern, _, _) in recurring.iterrows():
+        if re.match(pattern, x[column]):
+            return subgroup
+    return None
+
+
+def apply_transaction_groups(x, recurring):
+    """Return a transactions group and subgroup.
+    Transaction groups can be either income, rent, recurring, or
+    discretionary spending.
+    This function may fail if the number of income or wash
+    categories are expanded by Mint in the future.
+
+    """
+    # Check if rent
+    if x['Category'] == 'Mortgage & Rent':
+        return 'Rent', x['Category']
+    # Check if income
+    if x['Category'] in INCOME:
+        if x['Category'] != 'Paycheck':
+            return 'Income', x['Category']
+        if x['Date'].day <= 20:
+            return 'Income', 'Middle-of-Month'
+        if x['Date'].day > 20:
+            return 'Income', 'End-of-Month'
+    # Check if wash
+    if x['Category'] in WASH:
+        return 'Wash', x['Category']
+    # Check if recurring
+    recur_subgroup = match_recurring(x, recurring)
+    if recur_subgroup:
+        return 'Recurring', recur_subgroup
+    # Otherwise, must be discretionary
+    return 'Discretionary', 'Discretionary'
+
+
+def get_transactions(file_path=None, refine=True):
+    """Return a dataframe of the most specified Mint transactions file.
+    If refine is set to True, then column types and values will be
+    adjusted and the new Group and Subgroup columns will be added.
+
+    """
+    if file_path is None:
+        file_path = mintkit.core.mint.get_latest_file_location()
+    trans = pd.read_csv(file_path)
+    if not refine:
+        return trans
+    trans['Date'] = trans['Date'].map(lambda x: pd.Timestamp(x).date())
+    trans['Amount'] = trans.apply(
+        lambda x:
+        -x['Amount'] if x['Transaction Type'] == 'debit'
+        else x['Amount'], axis=1)
+    recurring = get_recurring()
+    trans[['Group', 'Subgroup']] = trans.apply(
+        apply_transaction_groups,
+        axis=1,
+        result_type='expand',
+        args=(recurring,))
+    return trans
+
 
 
 class TransactionManager():
-    def __init__(self, fl_loc=None):
-        self.fl_loc = fl_loc
-        self.set_df()
-
-    def apply_transaction_groups(self, x):
-        """
-        Label a transaction as income, rent, recurring, or
-        discretionary spending, as well as it's subgroup.
-        This may fail if the number of income or wash
-        categories are expanded by Mint.
-        """
-        # Check if rent
-        if x['Category'] == 'Mortgage & Rent':
-            return 'Rent', x['Category']
-        # Check if income
-        if x['Category'] in INCOME_CAT:
-            if x['Category'] != 'Paycheck':
-                return 'Income', x['Category']
-            if x['Date'].day <= 20:
-                return 'Income', 'Middle-of-Month'
-            if x['Date'].day > 20:
-                return 'Income', 'End-of-Month'
-        # Check if wash
-        if x['Category'] in WASH_CAT:
-            return 'Wash', x['Category']
-        # Check if recurring
-        recur_subgroup = self.recur_mgr.get_subgroup(x)
-        if recur_subgroup:
-            return 'Recurring', recur_subgroup
-        # Otherwise, must be discretionary
-        return 'Discretionary', 'Discretionary'
-
-    def set_df(self):
-        """
-        Set the dataframe of transactions and refine its contents.
-        """
-        if self.fl_loc is None:
-            self.fl_loc = scrapekit.get_latest_file_location()
-        self.df = pd.read_csv(self.fl_loc)
-        self.df['Date'] = self.df['Date'].map(
-            lambda x: pd.Timestamp(x).date())
-        self.df['Amount'] = self.df.apply(
-            lambda x: -x['Amount'] if x['Transaction Type'] == 'debit'
-            else x['Amount'], axis=1)
-        self.recur_mgr = RecurringManager()
-        self.df[['Group', 'Subgroup']] = self.df.apply(
-            self.apply_transaction_groups, axis=1, result_type='expand')
 
     def get_spending_by_day(self, n=5, total=False, count=False):
         """

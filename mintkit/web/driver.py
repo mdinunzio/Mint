@@ -101,8 +101,7 @@ class WebDriver:
             return None
 
     def jsclick(self, element, fatal=True):
-        """
-        Click an element using javascript
+        """Click an element using javascript
         (avoids ElementClickInterceptedException).
 
         """
@@ -114,3 +113,15 @@ class WebDriver:
             if fatal:
                 self.driver.quit()
                 sys.exit(1)
+
+    def execute_script(self, script):
+        """Execute the given script.
+
+        """
+        self.driver.execute_script(script)
+
+    def quit(self):
+        """Quit the driver.
+
+        """
+        self.driver.quit()

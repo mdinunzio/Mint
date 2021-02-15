@@ -1,6 +1,7 @@
 import mintkit.config as cfg
 import mintkit.utils.logging
-from mintkit.auth import authapi
+import mintkit.web.driver
+from mintkit.auth.api import auth_api
 import os
 import re
 import time
@@ -66,19 +67,23 @@ def login_mint(driver):
     sign_in_link = driver.await_element("a[aria-label='Sign in']")
     driver.jsclick(sign_in_link)
     email_form = driver.await_element('#ius-userid')
-    email_form.send_keys(authapi.mint.email)
+    email_form.clear()
+    email_form.send_keys(auth_api.mint.email)
     pw_form = driver.await_element('#ius-password')
-    pw_form.send_keys(authapi.mint.password)
+    pw_form.clear()
+    pw_form.send_keys(auth_api.mint.password)
     sign_in_btn = driver.await_element('#ius-sign-in-submit-btn')
     driver.jsclick(sign_in_btn)
     log.info('Finished logging in.')
 
 
-def refresh_accounts(driver, login=False):
+def refresh_accounts(driver=None, logged_in=False):
     """Refresh Mint's account data.
 
     """
-    if login:
+    if driver is None:
+        driver = mintkit.web.driver.WebDriver()
+    if not logged_in:
         login_mint(driver)
     log.info('Refreshing Mint accounts.')
     gear_btn = driver.await_element('.actionsMenuIcon.icon.icon-gear-gray3')
@@ -86,14 +91,18 @@ def refresh_accounts(driver, login=False):
     driver.jsclick(gear_btn)
     refresh_elem = driver.await_element('[data-action=refreshAccounts]')
     driver.jsclick(refresh_elem)
+    time.sleep(10)
+    driver.quit()
     log.info('Mint account refresh successful.')
 
 
-def download_transactions(driver, login=False):
+def download_transactions(driver=None, logged_in=False):
     """Download Mint's transaction data.
 
     """
-    if login:
+    if driver is None:
+        driver = mintkit.web.driver.WebDriver()
+    if not logged_in:
         login_mint(driver)
     log.info('Downloading Mint transaction data.')
     trans_link = driver.await_element('li#transaction > a')
@@ -108,4 +117,6 @@ def download_transactions(driver, login=False):
     if bar_x is not None:
         driver.jsclick(bar_x)
     driver.jsclick(trans_exp)
+    time.sleep(10)
+    driver.quit()
     log.info('Mint transactions exported successfully.')
