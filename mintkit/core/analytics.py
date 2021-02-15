@@ -13,43 +13,10 @@ log = mintkit.utils.logging.get_logger(cfg.PROJECT_NAME)
 # Income categories
 INCOME = ['Income', 'Bonus', 'Interest Income', 'Paycheck', 'Reimbursement',
           'Rental Income', 'Returned Purchase']
-
 # Wash categories
 WASH = ['Credit Card Payment', 'Transfer', 'Investments']
-
-
-# FUNCTIONS #################################################################
-
-def get_cash_flow_sheet():
-    """Return a DataFrame of Cash FLow sheet format.
-
-    """
-    cfm = pd.read_excel(CF_LOC, usecols='A:E', header=5)
-    cfm = cfm.rename(columns={'Unnamed: 0': 'Item'})
-    cfm = cfm.dropna(subset=['Item'])
-    cfm = cfm.drop('Realized', axis=1)
-    return cfm
-
-
-def get_cash_flow_structure(recur_mgr):
-    """Return a DataFrame with Groups and Subgroups that should be
-    left-mergeable with summaries derived from Transaction data.
-
-    """
-    # Get income pairs
-    paycheck_sg = ['Middle-of-Month', 'End-of-Month']
-    other_income_sg = ['Bonus', 'Interest Income', 'Reimbursement',
-                       'Rental Income', 'Returned Purchase', 'Income']
-    income_sg = paycheck_sg + other_income_sg
-    income_pairs = [('Income', sg) for sg in income_sg]
-    rent_pairs = [('Rent', 'Mortgage & Rent')]
-    recurring_pairs = [('Recurring', sg) for sg in
-                       recur_mgr.df['Subgroup'].tolist()]
-    disc_pairs = [('Discretionary', 'Discretionary')]
-    all_pairs = income_pairs + rent_pairs + recurring_pairs + disc_pairs
-    cf_structure = pd.DataFrame(columns=['Group', 'Subgroup'],
-                                data=all_pairs)
-    return cf_structure
+# Transaction groups
+GROUPS = ['Income', 'Rent', 'Recurring', 'Discretionary']
 
 
 def get_next_month_start(month, year):
@@ -86,7 +53,7 @@ def get_recurring(template_path=None):
                               sheet_name='Recurring',
                               skiprows=2)
     recurring = recurring.dropna(subset=['Pattern'])
-    return  recurring
+    return recurring
 
 
 def match_recurring(x, recurring):
@@ -138,273 +105,222 @@ def get_transactions(file_path=None, refine=True):
     """
     if file_path is None:
         file_path = mintkit.core.mint.get_latest_file_location()
-    trans = pd.read_csv(file_path)
+    transactions = pd.read_csv(file_path)
     if not refine:
-        return trans
-    trans['Date'] = trans['Date'].map(lambda x: pd.Timestamp(x).date())
-    trans['Amount'] = trans.apply(
+        return transactions
+    transactions['Date'] = transactions['Date'].map(
+        lambda x: pd.Timestamp(x).date())
+    transactions['Amount'] = transactions.apply(
         lambda x:
         -x['Amount'] if x['Transaction Type'] == 'debit'
         else x['Amount'], axis=1)
     recurring = get_recurring()
-    trans[['Group', 'Subgroup']] = trans.apply(
+    transactions[['Group', 'Subgroup']] = transactions.apply(
         apply_transaction_groups,
         axis=1,
         result_type='expand',
         args=(recurring,))
-    return trans
+    return transactions
 
 
+def get_date_index(start_date, end_date):
+    """Return a Index with dates spanning the given start and end dates.
 
-class TransactionManager():
+    """
+    date_index = pd.date_range(start_date, end_date)
+    date_index = date_index.map(lambda x: x.date())
+    return date_index
 
-    def get_spending_by_day(self, n=5, total=False, count=False):
-        """
-        Return a DataFrame containing an n-day summary of
-        discretionary spending.
-        Optionally return the count of transactions.
-        """
-        today = datetime.date.today()
-        tmn = today - datetime.timedelta(days=n)
-        spend = self.df[self.df['Group'] == 'Discretionary']
-        spend5d = spend[spend['Date'] >= tmn]
-        spend_count = len(spend5d)
-        spend_grp = spend5d.groupby('Date')
-        spend_stats = spend_grp[['Amount']].sum()
-        spend_stats = spend_stats.reset_index()
-        spend_stats = spend_stats.sort_values('Date', ascending=False)
-        spend_stats['Day'] = spend_stats['Date'].map(
-            lambda x: '{:%a %d}'.format(x))
-        spend_stats = spend_stats[['Day', 'Amount']]
-        spend_stats = spend_stats.reset_index(drop=True)
-        if total:
-            slen = len(spend_stats)
-            spend_stats.loc[slen, 'Day'] = 'Total'
-            spend_stats.loc[slen, 'Amount'] = spend_stats['Amount'].sum()
-        if count:
-            return spend_stats, spend_count
-        return spend_stats
 
-    def get_short_summary(self, month, year=None, net=True):
-        """
-        Return a short DataFrame summarizing monthly cash flow.
-        """
-        if year is None:
-            year = datetime.datetime.today().year
-        month_df = self.df.copy()
-        month_df = month_df[month_df['Date'].map(lambda x: x.year) == year]
-        month_df = month_df[month_df['Date'].map(lambda x: x.month) == month]
-        mgrp = month_df.groupby(['Group', 'Transaction Type'])
-        mstats = mgrp.agg('sum')
-        mstats = mstats.unstack(level=1)
-        mstats.columns = [x[1] for x in mstats.columns]
-        cols = ['debit', 'credit']
-        for c in cols:
-            if c not in mstats.columns:
-                mstats[c] = 0
-        mstats['net'] = mstats.sum(axis=1)
-        idx_order = ['Income', 'Rent', 'Recurring', 'Discretionary']
-        mstats = mstats.reindex(idx_order)
-        mstats = mstats.fillna(0)
-        if net:
-            mstats.loc['Net', :] = mstats.sum()
-        return mstats
+def get_group_index(recurring):
+    """Return a MultiIndex with Groups and Subgroups that should be
+    left-mergeable with summaries derived from Transaction data.
 
-    def get_long_summary(self, month, year=None, net=True):
-        """
-        Return a detailed DataFrame summarizing monthly cash flow.
-        """
-        if year is None:
-            year = datetime.datetime.today().year
-        month_df = self.df.copy()
-        month_df = month_df[month_df['Date'].map(lambda x: x.year) == year]
-        month_df = month_df[month_df['Date'].map(lambda x: x.month) == month]
-        mgrp = month_df.groupby(['Group', 'Subgroup', 'Transaction Type'])
-        mstats = mgrp.agg('sum')
-        mstats = mstats.unstack(level=2)
-        mstats.columns = [x[1] for x in mstats.columns]
-        cols = ['debit', 'credit']
-        for c in cols:
-            if c not in mstats.columns:
-                mstats[c] = 0
-        idx_order = ['Income', 'Rent', 'Recurring', 'Discretionary']
-        mstats = mstats.unstack(level=1)
-        mstats = mstats.reindex(idx_order)
-        mstats = mstats.stack(level=1)
-        mstats = mstats.fillna(0)
-        mstats['net'] = mstats.sum(axis=1)
-        if net:
-            mstats.loc['Net', 'net'] = mstats['net'].sum()
-        return mstats
+    """
+    # Get income pairs
+    paycheck_sg = ['Middle-of-Month', 'End-of-Month']
+    other_income_sg = ['Bonus', 'Interest Income', 'Reimbursement',
+                       'Rental Income', 'Returned Purchase', 'Income']
+    income_sg = paycheck_sg + other_income_sg
+    income_pairs = [('Income', sg) for sg in income_sg]
+    rent_pairs = [('Rent', 'Mortgage & Rent')]
+    recurring_pairs = [('Recurring', sg) for sg in
+                       recurring['Subgroup'].tolist()]
+    disc_pairs = [('Discretionary', 'Discretionary')]
+    all_pairs = income_pairs + rent_pairs + recurring_pairs + disc_pairs
+    group_index = pd.MultiIndex.from_tuples(
+        all_pairs, names=['Group', 'Subgroup'])
+    return group_index
 
-    def get_cash_flow_summary(self, month=None, year=None):
-        """
-        Return a DataFrame that replicates the Cash Flow Excel sheet.
-        """
-        if month is None:
-            month = datetime.date.today().month
-        if year is None:
-            year = datetime.date.today().year
 
-        cf_struct = get_cash_flow_structure(self.recur_mgr)
-        cf_model = get_cash_flow_sheet()
-        cf_model = cf_model[['Item', 'Expected']]
-        cf_model = cf_model.rename(columns={'Item': 'Subgroup'})
+def get_spending_by_day(transactions=None, lookback=5, append_total=True):
+    """Return a DataFrame containing a summary of discretionary
+    spending over the given lookback period.
+    If total is set to True, the total spending sum over the lookback period
+    will be included at the bottom of the returned dataframe.
+    """
+    if transactions is None:
+        transactions = get_transactions()
+    today = datetime.date.today()
+    lookback_date = today - datetime.timedelta(days=lookback)
+    discr = transactions[transactions['Group'] == 'Discretionary']
+    discr = discr[discr['Date'] >= lookback_date]
+    discretionary_count = len(discr)
+    day_grp = discr.groupby('Date')
+    day_spend = day_grp[['Amount']].sum()
+    date_index = get_date_index(lookback_date, today)
+    day_spend = day_spend.reindex(date_index)
+    day_spend = day_spend.sort_index(ascending=False)
+    day_spend['Day'] = day_spend.index.map(lambda x: '{:%a %d}'.format(x))
+    day_spend = day_spend[['Day', 'Amount']]
+    day_spend = day_spend.reset_index(drop=True)
+    day_spend['Amount'] = day_spend['Amount'].fillna(0)
+    if append_total:
+        statlen = len(day_spend)
+        day_spend.loc[statlen, 'Day'] = 'Total'
+        day_spend.loc[statlen, 'Amount'] = day_spend['Amount'].sum()
+    return day_spend, discretionary_count
 
-        ls = self.get_long_summary(month, year, net=False)
-        ls = ls.reset_index()
-        ls = ls.drop(['debit', 'credit'], axis=1)
-        ls = ls.rename(columns={'net': 'Realized'})
 
-        cf_smry = pd.merge(cf_struct, cf_model,
-                           how='left',
-                           on='Subgroup')
-        cf_smry = pd.merge(cf_smry, ls,
-                           how='left',
-                           on=['Group', 'Subgroup'])
-        cf_smry = cf_smry.fillna(0)
+def get_spending_by_group(transactions=None, month=None,
+                          year=None, append_net=True):
+    """Return a detailed DataFrame detailing transaction totals by group
+    and subgroup.
 
-        def apply_cf_projections(x):
-            """
-            If the line item is income, return any nonzero realized items,
-            otherwise return the expected column's value.
-            If item is an expense, return the minimum between expected
-            and realized.
-            """
-            if x['Group'] == 'Income':
-                if x['Realized'] != 0:
-                    return x['Realized']
-                else:
-                    return x['Expected']
-            else:
-                return min(x['Expected'], x['Realized'])
+    """
+    if transactions is None:
+        transactions = get_transactions()
+    if month is None:
+        month = datetime.date.today().month
+    if year is None:
+        year = datetime.datetime.today().year
+    month_df = transactions.copy()
+    month_df = month_df[month_df['Date'].map(lambda x: x.year) == year]
+    month_df = month_df[month_df['Date'].map(lambda x: x.month) == month]
+    group_grp = month_df.groupby(['Group', 'Subgroup', 'Transaction Type'])
+    group_spend = group_grp.agg('sum')
+    group_spend = group_spend.unstack(level=2)
+    group_spend.columns = [x[1] for x in group_spend.columns]
+    cols = ['debit', 'credit']
+    for c in cols:
+        if c not in group_spend.columns:
+            group_spend[c] = 0
+    group_spend = group_spend.reindex(GROUPS, level=0)
+    group_spend = group_spend.fillna(0)
+    group_spend['net'] = group_spend.sum(axis=1)
+    if append_net:
+        group_spend.loc['Net', 'net'] = group_spend['net'].sum()
+    return group_spend
 
-        cf_smry['Projected'] = cf_smry.apply(apply_cf_projections, axis=1)
 
-        cf_smry['Remaining'] = np.NaN
-        cf_smry = cf_smry.set_index(['Group', 'Subgroup'])
-        # Remaining after income
-        income_rem = cf_smry.loc[('Income', slice(None)), 'Projected'].sum()
-        last_idx = [x[1] for x in cf_smry.index if x[0] == 'Income'][-1]
-        cf_smry.loc[('Income', last_idx), 'Remaining'] = income_rem
-        # Remaining after rent
-        proj_rent = cf_smry.loc[('Rent', 'Mortgage & Rent'), 'Projected']
-        rent_rem = income_rem + proj_rent
-        cf_smry.loc['Mortgage & Rent', 'Remaining'] = rent_rem
-        # Remaining after recurring
-        proj_recur = cf_smry.loc[
-            ('Recurring', slice(None)), 'Projected'].sum()
-        proj_rem = rent_rem + proj_recur
-        last_idx = [x[1] for x in cf_smry.index if x[0] == 'Recurring'][-1]
-        cf_smry.loc[('Recurring', last_idx), 'Remaining'] = proj_rem
-        # Remaining after discretionary
-        real_disc = cf_smry.loc[('Discretionary',
-                                 'Discretionary'),
-                                'Realized']
-        disc_rem = proj_rem + real_disc
-        cf_smry.loc['Discretionary', 'Remaining'] = disc_rem
-        return cf_smry
+def get_excel_template_df(template_path=None):
+    """Return a DataFrame of the the data from the template Excel sheet
+    (Cash Flow.xlsm).
 
-    def get_monthly_pacing(self):
-        """
-        Return the amount spent, amount remaining, amount spent
-        per day, and amount remaining per day for the given month.
-        """
-        today = datetime.date.today()
-        day = today.day
-        month = today.month
-        year = today.year
-        cf_smry = self.get_cash_flow_summary(month, year)
-        spent = cf_smry.loc[
-            ('Discretionary', 'Discretionary'), 'Realized']
-        remaining = cf_smry.loc[
-            ('Discretionary', 'Discretionary'), 'Remaining']
-        days_in_month = get_days_in_month(month, year)
-        # Only days left includes today
-        days_left = days_in_month - day + 1
-        spent_per_day = spent / (day - 1)
-        rem_per_day = remaining / days_left
-        return spent, remaining, spent_per_day, rem_per_day
+    """
+    if template_path is None:
+        template_path = cfg.paths.template
+    template = pd.read_excel(template_path, usecols='A:E', header=5)
+    template = template.rename(columns={'Unnamed: 0': 'Subgroup'})
+    template = template.dropna(subset=['Subgroup'])
+    template = template.drop('Realized', axis=1)
+    return template
 
-    def graph_discretionary(self, start_date=None, end_date=None,
-                            appdata=False):
-        """
-        Graph discretionary spending by day for a given time period.
-        """
-        if start_date is None:
-            today = datetime.date.today()
-            start_date = datetime.date(today.year, today.month, 1)
-        if end_date is None:
-            next_start = datetime.date(
-                start_date.year, start_date.month + 1, 1)
-            end_date = next_start - datetime.timedelta(days=1)
-        period_df = self.df.copy()
-        period_df = period_df[period_df['Date'] >= start_date]
-        period_df = period_df[period_df['Date'] <= end_date]
-        discr = period_df[period_df['Group'] == 'Discretionary']
-        dgrp = discr.groupby('Date')
-        dsum = -dgrp['Amount'].sum()
-        plt.figure()
-        ax = plt.subplot(111)
-        ax.xaxis.set_major_formatter(mdates.DateFormatter('%b %d'))
-        ax.bar(dsum.index, dsum.values)
-        ax.xaxis_date()
-        plt.xticks(rotation=90)
-        plt.tight_layout()
-        if appdata:
-            plt.savefig(cfg.DATA_DIR + r'\spending.png')
+
+def apply_cash_flow_projections(x):
+    """
+    If the line item is income, return any nonzero realized items,
+    otherwise return the expected column's value.
+    If item is an expense, return the minimum between the expected
+    and realized values.
+    """
+    if x['Group'] == 'Income':
+        if x['Realized'] != 0:
+            return x['Realized']
         else:
-            plt.savefig(cfg.DT_DIR + r'\spending.png')
-        plt.close()
+            return x['Expected']
+    else:
+        return min(x['Expected'], x['Realized'])
 
-    def plot_spending(self, month, year, appdata=False):
-        if month is None:
-            month = datetime.date.today().month
-        if year is None:
-            year = datetime.date.today().year
-        start_date = datetime.date(year, month, 1)
-        next_start = get_next_month_start(month, year)
-        end_date = next_start - datetime.timedelta(days=1)
-        days = get_days_in_month(month, year)
-        discr = self.df[self.df['Group'] == 'Discretionary']
-        discr = discr[discr['Date'] >= start_date]
-        discr = discr[discr['Date'] <= end_date]
-        discr_dly = discr.groupby('Date')[['Amount']].sum()
-        discr_max = discr_dly.index.max()
-        if not isinstance(discr_max, datetime.date):
-            discr_max = pd.NaT
-        latest_date = max(datetime.date.today(), discr_max)
-        latest_date = min(latest_date, end_date)
-        lhs = pd.DataFrame(columns=['Date'],
-                           data=pd.date_range(start_date, latest_date))
-        lhs['Date'] = lhs['Date'].map(lambda x: x.date())
-        discr_dly = pd.merge(lhs, discr_dly, how='left', on='Date')
-        discr_dly['Amount'] = discr_dly['Amount'].fillna(0)
-        discr_dly['Amount'] = discr_dly['Amount'].cumsum()
-        discr_dly['Amount'] *= -1
-        cash_ws = get_cash_flow_sheet()
-        cash_ws = cash_ws.set_index('Item')
-        discr_inc = cash_ws.loc['Recurring', 'Remaining']
-        discr_inc_dly = pd.DataFrame(
-            data=zip(pd.date_range(start_date, end_date),
-                     [discr_inc / days] * days),
-            columns=['Date', 'Income'])
-        discr_inc_dly['Date'] = discr_inc_dly['Date'] .map(lambda x: x.date())
-        discr_inc_dly['Income'] = discr_inc_dly['Income'].cumsum()
-        fig = plt.figure()
-        ax = plt.subplot(111)
-        plt.plot_date(discr_inc_dly['Date'], discr_inc_dly['Income'], '-')
-        plt.plot_date(discr_dly['Date'], discr_dly['Amount'], '-')
-        plt.title('Spending By Day')
-        plt.xticks(rotation=45)
-        ax.xaxis.set_major_locator(mdates.DayLocator(interval=5))
-        plt.tight_layout()
-        if appdata:
-            plt.savefig(cfg.DATA_DIR + r'\spending.png')
-        else:
-            plt.savefig(cfg.DT_DIR + r'\spending.png')
-        plt.close()
 
-    def __repr__(self):
-        max_date = self.df['Date'].max()
-        return f'Transactions up to {max_date}'
+def get_cash_flow_summary(transactions=None, recurring=None,
+                          template_path=None, month=None, year=None):
+    """Return a DataFrame that replicates the cash flow summary
+    as it would be structured in the template Excel sheet (Cash Flow.xlsm).
+
+    """
+    if month is None:
+        month = datetime.date.today().month
+    if year is None:
+        year = datetime.date.today().year
+    if transactions is None:
+        transactions = get_transactions()
+    if recurring is None:
+        recurring = get_recurring()
+
+    template = get_excel_template_df(template_path)
+    template = template[['Subgroup', 'Expected']]
+
+    group_spend = get_spending_by_group(
+        transactions, month, year, append_net=False)
+    group_spend = group_spend.drop(['debit', 'credit'], axis=1)
+    group_spend = group_spend.rename(columns={'net': 'Realized'})
+    group_index = get_group_index(recurring)
+    group_spend = group_spend.reindex(group_index)
+    group_spend = group_spend.reset_index()
+
+    cash_flow = pd.merge(group_spend, template,
+                        how='left',
+                        on='Subgroup')
+    cash_flow = cash_flow.fillna(0)
+    cash_flow['Projected'] = cash_flow.apply(
+        apply_cash_flow_projections, axis=1)
+    cash_flow['Remaining'] = np.NaN
+    cash_flow = cash_flow.set_index(['Group', 'Subgroup'])
+    # Remaining after income
+    income_rem = cash_flow.loc[('Income', slice(None)), 'Projected'].sum()
+    last_idx = [x[1] for x in cash_flow.index if x[0] == 'Income'][-1]
+    cash_flow.loc[('Income', last_idx), 'Remaining'] = income_rem
+    # Remaining after rent
+    proj_rent = cash_flow.loc[('Rent', 'Mortgage & Rent'), 'Projected']
+    rent_rem = income_rem + proj_rent
+    cash_flow.loc[('Rent', 'Mortgage & Rent'), 'Remaining'] = rent_rem
+    # Remaining after recurring
+    proj_recur = cash_flow.loc[('Recurring', slice(None)), 'Projected'].sum()
+    recur_rem = rent_rem + proj_recur
+    last_idx = [x[1] for x in cash_flow.index if x[0] == 'Recurring'][-1]
+    cash_flow.loc[('Recurring', last_idx), 'Remaining'] = recur_rem
+    # Remaining after discretionary
+    real_disc = cash_flow.loc[('Discretionary', 'Discretionary'), 'Realized']
+    disc_rem = recur_rem + real_disc
+    cash_flow.loc[('Discretionary', 'Discretionary'), 'Remaining'] = disc_rem
+    return cash_flow
+
+
+def get_current_month_spending_stats(transactions=None, recurring=None,
+                                     month=None,  year=None):
+    """Return the amount spent, amount remaining, amount spent
+    per day, and amount remaining per day for the given month.
+
+    """
+    if transactions is None:
+        transactions = get_transactions()
+    if recurring is None:
+        recurring = get_recurring()
+    today = datetime.date.today()
+    day = today.day
+    month = today.month
+    year = today.year
+    cash_flow = get_cash_flow_summary(
+        transactions=transactions, recurring=recurring, month=month, year=year)
+    spent = cash_flow.loc[('Discretionary', 'Discretionary'), 'Realized']
+    remaining = cash_flow.loc[('Discretionary', 'Discretionary'), 'Remaining']
+    days_in_month = get_days_in_month(month, year)
+    # Only days left includes today
+    days_left = days_in_month - day + 1
+    spent_per_day = spent / (day - 1)
+    remaining_per_day = remaining / days_left
+    return spent, remaining, spent_per_day, remaining_per_day
+
+
+
