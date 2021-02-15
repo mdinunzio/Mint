@@ -135,6 +135,7 @@ def get_date_index(start_date, end_date):
 def get_group_index(recurring):
     """Return a MultiIndex with Groups and Subgroups that should be
     left-mergeable with summaries derived from Transaction data.
+    This function could break if Mint later modifies their categories.
 
     """
     # Get income pairs
@@ -158,6 +159,7 @@ def get_spending_by_day(transactions=None, lookback=5, append_total=True):
     spending over the given lookback period.
     If total is set to True, the total spending sum over the lookback period
     will be included at the bottom of the returned dataframe.
+
     """
     if transactions is None:
         transactions = get_transactions()
@@ -233,6 +235,7 @@ def apply_cash_flow_projections(x):
     otherwise return the expected column's value.
     If item is an expense, return the minimum between the expected
     and realized values.
+
     """
     if x['Group'] == 'Income':
         if x['Realized'] != 0:
@@ -249,10 +252,6 @@ def get_cash_flow_summary(transactions=None, recurring=None,
     as it would be structured in the template Excel sheet (Cash Flow.xlsm).
 
     """
-    if month is None:
-        month = datetime.date.today().month
-    if year is None:
-        year = datetime.date.today().year
     if transactions is None:
         transactions = get_transactions()
     if recurring is None:
@@ -297,8 +296,7 @@ def get_cash_flow_summary(transactions=None, recurring=None,
     return cash_flow
 
 
-def get_current_month_spending_stats(transactions=None, recurring=None,
-                                     month=None,  year=None):
+def get_current_month_spending_stats(transactions=None, recurring=None):
     """Return the amount spent, amount remaining, amount spent
     per day, and amount remaining per day for the given month.
 
@@ -321,6 +319,3 @@ def get_current_month_spending_stats(transactions=None, recurring=None,
     spent_per_day = spent / (day - 1)
     remaining_per_day = remaining / days_left
     return spent, remaining, spent_per_day, remaining_per_day
-
-
-

@@ -20,6 +20,7 @@ paths.x86 = mintkit.utils.paths.Path(r"C:\Program Files (x86)")
 paths.chrome = paths.x86 + r'Google\Chrome\Application\chrome.exe'
 paths.chrome_profile = paths.local + r'Google\Chrome\User Data\Default'
 paths.chromedriver = paths.x86 + r'chromedriver_win32\chromedriver.exe'
+paths.template = paths.home + r'Google Drive\Finances\Cash Flow.xlsm'
 
 # path creation
 if not paths.appdata.exists():
