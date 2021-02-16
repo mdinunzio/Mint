@@ -16,10 +16,28 @@ import mintkit.auth.tasks
 
 log = mintkit.utils.logging.get_logger(cfg.PROJECT_NAME)
 
+
+def open_logs():
+    """Open the log directory.
+
+    """
+    cfg.paths.logs.open()
+
+
+def setup():
+    """Setup the credentials and driver.
+
+    """
+    mintkit.web.tasks.setup_chromedriver()
+    mintkit.auth.tasks.setup_credentials()
+
+
 _tasks = {'refresh': mintkit.core.tasks.refresh_accounts,
           'text': mintkit.core.tasks.send_spending_update_text,
+          'setup': setup,
           'setup-driver': mintkit.web.tasks.setup_chromedriver,
-          'setup-creds': mintkit.auth.tasks.setup_credentials}
+          'setup-creds': mintkit.auth.tasks.setup_credentials,
+          'logs': open_logs}
 
 
 @click.command()
