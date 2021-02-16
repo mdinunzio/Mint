@@ -1,6 +1,6 @@
 import mintkit.config as cfg
 import mintkit.utils.logging
-import mintkit.core.mint
+import mintkit.core.tasks
 from mintkit.utils.formatting import usd
 import pandas as pd
 import numpy as np
@@ -105,7 +105,7 @@ def get_transactions(file_path=None, refine=True):
 
     """
     if file_path is None:
-        file_path = mintkit.core.mint.get_latest_file_location()
+        file_path = mintkit.core.tasks.get_latest_file_location()
     transactions = pd.read_csv(file_path)
     if not refine:
         return transactions

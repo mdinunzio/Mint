@@ -3,7 +3,7 @@
 """
 import mintkit.config as cfg
 import mintkit.utils.logging
-import mintkit.web.utils
+import mintkit.utils.env
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -27,7 +27,7 @@ class WebDriver:
             self.start_driver()
         except Exception as e:
             print(e)
-            mintkit.web.utils.taskkill('chrome')
+            mintkit.utils.env.taskkill('chrome')
             self.start_driver()
 
     def start_driver(self):

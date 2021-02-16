@@ -10,13 +10,16 @@ import click
 import mintkit.config as cfg
 import mintkit.utils.logging
 import mintkit.core.tasks
-import mintkit.core.mint
+import mintkit.web.tasks
+import mintkit.auth.tasks
 
 
 log = mintkit.utils.logging.get_logger(cfg.PROJECT_NAME)
 
-_tasks = {'refresh': mintkit.core.mint.refresh_accounts,
-          'text': mintkit.core.tasks.send_spending_update_text}
+_tasks = {'refresh': mintkit.core.tasks.refresh_accounts,
+          'text': mintkit.core.tasks.send_spending_update_text,
+          'setup-driver': mintkit.web.tasks.setup_chromedriver,
+          'setup-creds': mintkit.auth.tasks.setup_credentials}
 
 
 @click.command()

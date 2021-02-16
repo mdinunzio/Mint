@@ -1,18 +1,11 @@
 import mintkit.config as cfg
 import mintkit.utils.logging
 import mintkit.auth.cred
-import mintkit.gmail.manager
-import os
+import mintkit.gmail.tasks
+import mintkit.utils.env
 
 
 log = mintkit.utils.logging.get_logger(cfg.PROJECT_NAME)
-
-
-def get_username():
-    """Return the OS username.
-
-    """
-    return os.path.expanduser('~').split(os.sep)[-1].lower()
 
 
 def save_mint_credentials(email, password):
@@ -22,7 +15,7 @@ def save_mint_credentials(email, password):
     cred = mintkit.auth.cred.Credential('mint')
     cred.email = email
     cred.password = password
-    key = get_username()
+    key = mintkit.utils.env.get_username()
     cred.save(key)
 
 
@@ -44,7 +37,7 @@ def save_user_credentials(email, mobile):
     cred = mintkit.auth.cred.Credential('user')
     cred.email = email
     cred.mobile = mobile
-    key = get_username()
+    key = mintkit.utils.env.get_username()
     cred.save(key)
 
 
@@ -65,4 +58,5 @@ def setup_credentials():
 
     """
     setup_mint_credentials()
-    mintkit.gmail.manager.setup_gmail_credentials()
+    setup_user_credentials()
+    mintkit.gmail.tasks.setup_gmail_credentials()

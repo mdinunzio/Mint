@@ -1,8 +1,7 @@
 import mintkit.config as cfg
 import mintkit.utils.logging
+import mintkit.utils.env
 import requests
-import psutil
-import subprocess
 import zipfile
 from bs4 import BeautifulSoup
 import re
@@ -11,28 +10,6 @@ import re
 log = mintkit.utils.logging.get_logger(cfg.PROJECT_NAME)
 
 CHROMEDRIVER_URL = r'https://chromedriver.chromium.org'
-
-
-def taskkill(image_name):
-    """Kill a task with the given image name.
-
-    """
-    procs = [x for x in psutil.process_iter() if image_name in x.name()]
-    for p in procs:
-        p.kill()
-
-
-def get_chrome_version():
-    """Return the version of Chrome on this PC.
-
-    """
-    cmd = r'reg query "HKEY_CURRENT_USER\Software\Google\Chrome\BLBeacon" ' \
-          r'/v version'
-    res = subprocess.run(cmd, capture_output=True)
-    version = res.stdout.decode('utf-8')
-    version = version.split(' ')[-1]
-    version = version.strip()
-    return version
 
 
 def get_chromedriver_version_map():
@@ -100,7 +77,7 @@ def setup_chromedriver():
 
     """
     log.info('Setting up Chromedriver.')
-    chrome_ver = get_chrome_version()
+    chrome_ver = mintkit.utils.env.get_chrome_version()
     log.info(f'Chrome version is {chrome_ver}')
     chrome_ver_short = chrome_ver.split('.')[0]
     zip_path = download_chromedriver_zip(chrome_ver_short)
