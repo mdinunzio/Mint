@@ -347,7 +347,7 @@ def get_recent_spending_summary(transactions=None, recurring=None, lookback=5):
     summary += f'<br><br>Spent {lookback:.0f}d: {usd(lookback_spent, 0)}<br>'
     summary += f'Pace {lookback:.0f}d: {usd(lookback_pace, 0)}<br><br>'
     summary += f'Spent {today:%b}: {usd(month_spent, 0)}<br>'
-    summary += f'Spent {today:%b}/Day: {usd(month_pace, 0)}<br>'
     summary += f'Remaining {today:%b}: {usd(month_remaining, 0)}<br>'
+    summary += f'Spent {today:%b}/Day: {usd(month_pace, 0)}<br>'
     summary += f'Remaining {today:%b}/Day: {usd(month_remaining_pace, 0)}'
     return summary

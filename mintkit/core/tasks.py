@@ -1,7 +1,11 @@
 import mintkit.config as cfg
 import mintkit.utils.logging
+import mintkit.core.analytics
+import mintkit.core.plotting
+import mintkit.gmail.email
 import mintkit.web.driver
 from mintkit.auth.api import auth_api
+import datetime
 import os
 import re
 import time
@@ -128,7 +132,7 @@ def send_spending_update_text():
     """
     log.info('Preparing spending summary text')
     log.info('Downloading transactions')
-    mintkit.core.tasks.download_transactions()
+    download_transactions()
     log.info('Retrieving files')
     transactions = mintkit.core.analytics.get_transactions()
     recurring = mintkit.core.analytics.get_recurring()
