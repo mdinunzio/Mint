@@ -37,6 +37,29 @@ def setup_mint_credentials():
     print('Mint credentials successfully saved.')
 
 
+def save_user_credentials(email, mobile):
+    """Save the user's credentials.
+
+    """
+    cred = mintkit.auth.cred.Credential('user')
+    cred.email = email
+    cred.mobile = mobile
+    key = get_username()
+    cred.save(key)
+
+
+def setup_user_credentials():
+    """Interactively setup the user's personal credentials.
+
+    """
+    print('Please provide your personal email.')
+    email = input('email: ')
+    print('Please provide your mobile phone number.')
+    mobile = input('mobile phone: ')
+    save_user_credentials(email, mobile)
+    print("User's credentials successfully saved.")
+
+
 def setup_credentials():
     """Interactively setup all of the user's credentials.
 

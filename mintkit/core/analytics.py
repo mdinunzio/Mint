@@ -319,3 +319,17 @@ def get_current_month_spending_stats(transactions=None, recurring=None):
     spent_per_day = spent / (day - 1)
     remaining_per_day = remaining / days_left
     return spent, remaining, spent_per_day, remaining_per_day
+
+
+def get_recent_spending_summary(transactions=None, lookback=5):
+    """Return a string"""
+    if transactions is None:
+        transactions = get_transactions()
+    day_spend, discretionary_count = get_spending_by_day(
+        transactions=transactions, lookback=lookback, append_total=True)
+    five_d_ttl = spend_smry['Amount'].sum()
+    five_d_pace = five_d_ttl / len(spend_smry)
+    send_str = f'{spend_count:,.0f} items:<br><br>'
+    send_str += spend_smry.to_html(header=False, index=False)
+    send_str += f'<br><br>Spent 5d: ${five_d_ttl:,.2f}<br>'
+    send_str += f'Pace 5d: ${five_d_pace:,.2f}<br><br>'
