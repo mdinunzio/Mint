@@ -1,6 +1,7 @@
 import mintkit.config as cfg
 import mintkit.utils.logging
 import mintkit.core.mint
+from mintkit.utils.formatting import usd
 import pandas as pd
 import numpy as np
 import datetime
@@ -154,7 +155,7 @@ def get_group_index(recurring):
     return group_index
 
 
-def get_spending_by_day(transactions=None, lookback=5, append_total=True):
+def get_spending_by_day(transactions=None, lookback=5, append_total=False):
     """Return a DataFrame containing a summary of discretionary
     spending over the given lookback period.
     If total is set to True, the total spending sum over the lookback period
@@ -321,15 +322,32 @@ def get_current_month_spending_stats(transactions=None, recurring=None):
     return spent, remaining, spent_per_day, remaining_per_day
 
 
-def get_recent_spending_summary(transactions=None, lookback=5):
-    """Return a string"""
+def get_recent_spending_summary(transactions=None, recurring=None, lookback=5):
+    """Return an HTML string summarizing recent discretionary spending
+    activity.
+
+    """
     if transactions is None:
         transactions = get_transactions()
-    day_spend, discretionary_count = get_spending_by_day(
-        transactions=transactions, lookback=lookback, append_total=True)
-    five_d_ttl = spend_smry['Amount'].sum()
-    five_d_pace = five_d_ttl / len(spend_smry)
-    send_str = f'{spend_count:,.0f} items:<br><br>'
-    send_str += spend_smry.to_html(header=False, index=False)
-    send_str += f'<br><br>Spent 5d: ${five_d_ttl:,.2f}<br>'
-    send_str += f'Pace 5d: ${five_d_pace:,.2f}<br><br>'
+    if recurring is None:
+        recurring = get_recurring()
+    lookback_df, lookback_count = get_spending_by_day(
+        transactions=transactions, lookback=lookback, append_total=False)
+    lookback_spent = lookback_df['Amount'].sum()
+    lookback_pace = lookback_spent / len(lookback_df)
+    (month_spent,
+     month_remaining,
+     month_pace,
+     month_remaining_pace) = get_current_month_spending_stats(
+            transactions=transactions, recurring=recurring)
+    today = datetime.date.today()
+    summary = f'{lookback:.0f}d: {usd(lookback_spent, 0)} '
+    summary += f'({lookback_count:.0f} items)<br><br>'
+    summary += lookback_df.to_html(header=False, index=False)
+    summary += f'<br><br>Spent {lookback:.0f}d: {usd(lookback_spent, 0)}<br>'
+    summary += f'Pace {lookback:.0f}d: {usd(lookback_pace, 0)}<br><br>'
+    summary += f'Spent {today:%b}: {usd(month_spent, 0)}<br>'
+    summary += f'Spent {today:%b}/Day: {usd(month_pace, 0)}<br>'
+    summary += f'Remaining {today:%b}: {usd(month_remaining, 0)}<br>'
+    summary += f'Remaining {today:%b}/Day: {usd(month_remaining_pace, 0)}'
+    return summary

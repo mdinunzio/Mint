@@ -3,12 +3,14 @@ import mintkit.utils.logging
 import mintkit.core.analytics
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+from pandas.plotting import register_matplotlib_converters
 import pandas as pd
 import numpy as np
 import datetime
 
 
 log = mintkit.utils.logging.get_logger(cfg.PROJECT_NAME)
+register_matplotlib_converters()
 
 
 def plot_spending(transactions=None, recurring=None, month=None, year=None):

@@ -67,8 +67,8 @@ class EmailMessage:
         """
         self.service = googleapiclient.discovery.build(
             'gmail', 'v1', credentials=auth_api.gmail)
-        self._to = to
-        self._cc = cc
+        self._to = _to_list(to)
+        self._cc = _to_list(cc)
         self.body = body
         self.subject = subject
         if sender is None:
