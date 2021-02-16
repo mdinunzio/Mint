@@ -3,46 +3,18 @@
 """
 import mintkit.config as cfg
 import mintkit.utils.logging
+import mintkit.web.utils
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 import sys
-import psutil
-import subprocess
 
 
 # Get logger
 log = mintkit.utils.logging.get_logger(cfg.PROJECT_NAME)
 
-
-# HELPER FUNCTIONS ############################################################
-
-def taskkill(image_name):
-    """Kill a task with the given image name.
-
-    """
-    procs = [x for x in psutil.process_iter() if image_name in x.name()]
-    for p in procs:
-        p.kill()
-
-
-def get_chrome_version():
-    """Return the version of Chrome on this PC.
-
-    """
-    name = cfg.paths.chrome
-    cmd = r'reg query "HKEY_CURRENT_USER\Software\Google\Chrome\BLBeacon" ' \
-          r'/v version'
-    res = subprocess.run(cmd, capture_output=True)
-    version = res.stdout.decode('utf-8')
-    version = version.split(' ')[-1]
-    version = version.strip()
-    return version
-
-
-# MODELS ######################################################################
 
 class WebDriver:
     def __init__(self):
@@ -55,7 +27,7 @@ class WebDriver:
             self.start_driver()
         except Exception as e:
             print(e)
-            taskkill('chrome')
+            mintkit.web.utils.taskkill('chrome')
             self.start_driver()
 
     def start_driver(self):
