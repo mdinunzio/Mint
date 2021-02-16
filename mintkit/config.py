@@ -16,6 +16,7 @@ paths.appdata = paths.local + PROJECT_NAME
 paths.logs = paths.appdata + 'logs'
 paths.user = paths.appdata + paths.home[-1]
 paths.creds = paths.user + 'creds'
+paths.plots = paths.user + 'plots'
 paths.x86 = mintkit.utils.paths.Path(r"C:\Program Files (x86)")
 paths.chrome = paths.x86 + r'Google\Chrome\Application\chrome.exe'
 paths.chrome_profile = paths.local + r'Google\Chrome\User Data\Default'
@@ -29,6 +30,8 @@ if not paths.logs.exists():
     paths.logs.create()
 if not paths.creds.exists():
     paths.creds.create()
+if not paths.plots.exists():
+    paths.plots.create()
 
 # debug settings
 DEBUG = os.environ.get('MINTKITDEBUG') == 1
