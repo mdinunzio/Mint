@@ -34,9 +34,17 @@ def setup():
     mintkit.auth.tasks.setup_credentials()
 
 
+def setup_paths():
+    """Setup all configurable paths.
+
+    """
+    mintkit.utils.paths.setup_template_path(cfg.paths)
+
+
 _tasks = {'refresh': mintkit.core.tasks.refresh_accounts,
           'text': mintkit.core.tasks.send_spending_update_text,
           'setup': setup,
+          'setup-paths': setup_paths,
           'setup-driver': mintkit.web.tasks.setup_chromedriver,
           'setup-creds': mintkit.auth.tasks.setup_credentials,
           'logs': open_logs}
