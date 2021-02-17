@@ -5,6 +5,6 @@ def usd(number, decimal_places=2):
 
     """
     if number >= 0:
-        return f'${number:.{decimal_places}f}'
+        return f'${number:,.{decimal_places}f}'
     else:
-        return f'-${abs(number):.{decimal_places}f}'
+        return f'-${abs(number):,.{decimal_places}f}'
