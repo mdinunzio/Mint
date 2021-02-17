@@ -1,7 +1,6 @@
 """A custom path library.
 
 """
-
 import os
 import sys
 import subprocess
@@ -101,7 +100,8 @@ class Path(str):
         while os.path.isdir(curr_path):
             curr_path = curr_path + components.pop(0)
         if len(components) >= max_depth:
-            raise ValueError('Path creation would exceed maximum allowed depth.')
+            raise ValueError(
+                'Path creation would exceed maximum allowed depth.')
         os.mkdir(curr_path)
         while len(components) > 0:
             curr_path = curr_path + components.pop(0)
@@ -113,6 +113,13 @@ class Path(str):
         """
         if self._path not in sys.path:
             sys.path.append(self._path)
+
+    def save(self, file_path):
+        """Save to a text file.
+
+        """
+        with open(file_path, 'w') as file:
+            file.write(self._path)
 
 
 class PathManager:
@@ -151,3 +158,57 @@ class PathManager:
 
         """
         return str(self)
+
+
+def from_file(file_path):
+    """Return a Path from a saved file.
+
+    """
+    with open(file_path, 'r') as file:
+        path_str = file.read()
+    return Path(path_str)
+
+
+def create_key_paths(paths):
+    """Ensure paths important to program function exist.
+
+    """
+    # appdata
+    if not paths.appdata.exists():
+        paths.appdata.create()
+    # logs
+    if not paths.logs.exists():
+        paths.logs.create()
+    # settings
+    if not paths.settings.exists():
+        paths.settings.create()
+    # creds
+    if not paths.creds.exists():
+        paths.creds.create()
+    # plots
+    if not paths.plots.exists():
+        paths.plots.create()
+
+
+def setup_template_path(paths):
+    """Configure the path to the Excel template (Cash Flow) file.
+
+    """
+    print('Please enter the full path to the template file.')
+    template_path = input('template path: ')
+    template_path = Path(template_path)
+    template_path.save(paths.settings + 'template.path')
+    return template_path
+
+
+def get_template_path(paths):
+    """Return the template path saved in the user's settings. Otherwise
+    create it.
+
+    """
+    saved_template_path = paths.settings + 'template.path'
+    if saved_template_path.exists():
+        template_path = from_file(saved_template_path)
+    else:
+        template_path = setup_template_path(paths)
+    return template_path

@@ -15,23 +15,18 @@ paths.local = paths.home + 'AppData' + 'Local'
 paths.appdata = paths.local + PROJECT_NAME
 paths.logs = paths.appdata + 'logs'
 paths.user = paths.appdata + paths.home[-1]
+paths.settings = paths.user + 'settings'
 paths.creds = paths.user + 'creds'
 paths.plots = paths.user + 'plots'
 paths.x86 = mintkit.utils.paths.Path(r"C:\Program Files (x86)")
 paths.chrome = paths.x86 + r'Google\Chrome\Application\chrome.exe'
 paths.chrome_profile = paths.local + r'Google\Chrome\User Data\Default'
 paths.chromedriver = paths.x86 + r'chromedriver_win32\chromedriver.exe'
-paths.template = paths.home + r'Google Drive\Finances\Cash Flow.xlsm'
+# ensure paths exist
+mintkit.utils.paths.create_key_paths(paths)
+# get template path
+paths.template = mintkit.utils.paths.get_template_path(paths)
 
-# path creation
-if not paths.appdata.exists():
-    paths.appdata.create()
-if not paths.logs.exists():
-    paths.logs.create()
-if not paths.creds.exists():
-    paths.creds.create()
-if not paths.plots.exists():
-    paths.plots.create()
 
 # debug settings
 DEBUG = os.environ.get('MINTKITDEBUG') == 1
