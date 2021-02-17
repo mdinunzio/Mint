@@ -4,6 +4,7 @@
 import os
 import sys
 import subprocess
+import warnings
 
 
 class Path(str):
@@ -198,7 +199,6 @@ def setup_template_path(paths):
     template_path = input('template path: ')
     template_path = Path(template_path)
     template_path.save(paths.settings + 'template.path')
-    return template_path
 
 
 def get_template_path(paths):
@@ -210,5 +210,6 @@ def get_template_path(paths):
     if saved_template_path.exists():
         template_path = from_file(saved_template_path)
     else:
-        template_path = setup_template_path(paths)
+        warnings.warn('Template path is not saved, reverting to default.')
+        template_path = paths.user + 'Google Drive/Finances/Cash Flow.xlsm'
     return template_path

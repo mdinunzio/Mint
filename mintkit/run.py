@@ -9,6 +9,7 @@ sys.path.append(_proj_path)
 import click
 import mintkit.config as cfg
 import mintkit.utils.logging
+import mintkit.utils.paths
 import mintkit.core.tasks
 import mintkit.web.tasks
 import mintkit.auth.tasks
@@ -28,6 +29,7 @@ def setup():
     """Setup the credentials and driver.
 
     """
+    mintkit.utils.paths.setup_template_path(cfg.paths)
     mintkit.web.tasks.setup_chromedriver()
     mintkit.auth.tasks.setup_credentials()
 
