@@ -211,5 +211,5 @@ def get_template_path(paths):
         template_path = from_file(saved_template_path)
     else:
         warnings.warn('Template path is not saved, reverting to default.')
-        template_path = paths.user + 'Google Drive/Finances/Cash Flow.xlsm'
+        template_path = paths.home + 'Google Drive/Finances/Cash Flow.xlsm'
     return template_path
