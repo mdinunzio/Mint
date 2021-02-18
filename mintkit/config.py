@@ -7,7 +7,8 @@ PROJECT_NAME = 'MintKit'
 
 # path definition
 paths = mintkit.utils.paths.PathManager()
-paths.base = mintkit.utils.paths.Path(__file__) + '..'
+paths.app = mintkit.utils.paths.Path(__file__) + '..'
+paths.base = paths.app + '..'
 paths.home = mintkit.utils.paths.Path(os.path.expanduser('~'))
 paths.desktop = paths.home + 'Desktop'
 paths.downloads = paths.home + 'Downloads'

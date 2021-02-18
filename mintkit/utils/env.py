@@ -43,6 +43,6 @@ def request_uac(task):
     """Run the given task after requesting UAC permissions.
 
     """
-    params = str(cfg.paths.base + 'run.py') + f' --task {task}'
+    params = str(cfg.paths.app + 'run.py') + f' --task {task}'
     ctypes.windll.shell32.ShellExecuteW(
         None, "runas", sys.executable, params, None, 1)
