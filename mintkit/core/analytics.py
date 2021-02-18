@@ -388,10 +388,14 @@ def get_cash_flow_summary(transactions=None, recurring=None, investments=None,
                   'RemainingCF'] = disc_rem_cf
     cash_flow.loc[('Discretionary', 'Discretionary'),
                   'RemainingNW'] = disc_rem_nw
+    # Adjust special Discretionary expected case
+    cash_flow.loc[('Discretionary', 'Discretionary'),
+                  'Expected'] = min(-invest_rem_cf, 0)
     return cash_flow
 
 
-def get_current_month_spending_stats(transactions=None, recurring=None):
+def get_current_month_spending_stats(transactions=None, recurring=None,
+                                     investments=None):
     """Return the amount spent, amount remaining, amount spent
     per day, and amount remaining per day for the given month.
 
@@ -400,20 +404,25 @@ def get_current_month_spending_stats(transactions=None, recurring=None):
         transactions = get_transactions()
     if recurring is None:
         recurring = get_recurring()
+    if investments is None:
+        investments = get_investments()
     today = datetime.date.today()
     day = today.day
     month = today.month
     year = today.year
     cash_flow = get_cash_flow_summary(
-        transactions=transactions, recurring=recurring, month=month, year=year)
+        transactions=transactions, recurring=recurring,
+        investments=investments, month=month, year=year)
     spent = cash_flow.loc[('Discretionary', 'Discretionary'), 'Realized']
-    remaining = cash_flow.loc[('Discretionary', 'Discretionary'), 'Remaining']
+    rem_cf = cash_flow.loc[('Discretionary', 'Discretionary'), 'RemainingCF']
+    rem_nw = cash_flow.loc[('Discretionary', 'Discretionary'), 'RemainingNW']
     days_in_month = get_days_in_month(month, year)
     # Only days left includes today
     days_left = days_in_month - day + 1
-    spent_per_day = spent / (day - 1)
-    remaining_per_day = remaining / days_left
-    return spent, remaining, spent_per_day, remaining_per_day
+    spent_pace = spent / (day - 1)
+    rem_cf_pace = rem_cf / days_left
+    rem_nw_pace = rem_nw / days_left
+    return spent, spent_pace, rem_cf, rem_cf_pace, rem_nw, rem_nw_pace
 
 
 def get_recent_spending_summary(transactions=None, recurring=None, lookback=5):
@@ -425,23 +434,26 @@ def get_recent_spending_summary(transactions=None, recurring=None, lookback=5):
         transactions = get_transactions()
     if recurring is None:
         recurring = get_recurring()
-    lookback_df, lookback_count = get_spending_by_day(
+    df_lookback, count_lookback = get_spending_by_day(
         transactions=transactions, lookback=lookback, append_total=False)
-    lookback_spent = lookback_df['Amount'].sum()
-    lookback_pace = lookback_spent / len(lookback_df)
-    (month_spent,
-     month_remaining,
-     month_pace,
-     month_remaining_pace) = get_current_month_spending_stats(
-            transactions=transactions, recurring=recurring)
+    spent_lookback = df_lookback['Amount'].sum()
+    spent_lookback_pace = spent_lookback / len(df_lookback)
+    (spent,
+     spent_pace,
+     rem_cf,
+     rem_cf_pace,
+     rem_nw,
+     rem_nw_pace) = get_current_month_spending_stats(
+        transactions=transactions, recurring=recurring)
     today = datetime.date.today()
-    summary = f'{lookback:.0f}d: {usd(lookback_spent, 0)} '
-    summary += f'({lookback_count:.0f} items)<br><br>'
-    summary += lookback_df.to_html(header=False, index=False)
-    summary += f'<br><br>Spent {lookback:.0f}d: {usd(lookback_spent, 0)}<br>'
-    summary += f'Pace {lookback:.0f}d: {usd(lookback_pace, 0)}<br><br>'
-    summary += f'Spent {today:%b}: {usd(month_spent, 0)}<br>'
-    summary += f'Remaining {today:%b}: {usd(month_remaining, 0)}<br>'
-    summary += f'Spent {today:%b}/Day: {usd(month_pace, 0)}<br>'
-    summary += f'Remaining {today:%b}/Day: {usd(month_remaining_pace, 0)}'
+    summary = f'{lookback:.0f}d: ({count_lookback:.0f} items)<br><br>'
+    summary += df_lookback.to_html(header=False, index=False)
+    summary += f'<br><br>Spent {lookback:.0f}d: {usd(spent_lookback, 0)}<br>'
+    summary += f'Pace {lookback:.0f}d: {usd(spent_lookback_pace, 0)}<br><br>'
+    summary += f'Spent {today:%b}: {usd(spent, 0)}<br>'
+    summary += f'Spent {today:%b}/Day: {usd(spent_pace, 0)}<br>'
+    summary += f'Remaining NW {today:%b}: {usd(rem_nw, 0)}<br>'
+    summary += f'Remaining NW/Day: {usd(rem_nw_pace, 0)}<br>'
+    summary += f'Remaining CF {today:%b}: {usd(rem_cf, 0)}<br>'
+    summary += f'Remaining CF/Day: {usd(rem_cf_pace, 0)}<br>'
     return summary
