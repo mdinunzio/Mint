@@ -6,6 +6,7 @@ import pandas as pd
 import numpy as np
 import datetime
 import re
+import os
 
 
 log = mintkit.utils.logging.get_logger(cfg.PROJECT_NAME)
@@ -17,7 +18,48 @@ INCOME = ['Income', 'Bonus', 'Interest Income', 'Paycheck', 'Reimbursement',
 # Wash categories
 WASH = ['Credit Card Payment', 'Transfer', 'Investments']
 # Transaction groups
-GROUPS = ['Income', 'Rent', 'Recurring', 'Discretionary']
+GROUPS = ['Income', 'Rent', 'Recurring', 'Investments', 'Discretionary']
+
+# Regular Expressions
+TRANSACT_PATTERN = r'transactions(?: \((?P<instance>\d+)\))?\.csv'
+TRANSACT_RE = re.compile(TRANSACT_PATTERN)
+
+
+def _sort_files(x):
+    """Return the sort key index for a transaction file.
+
+    """
+    match = TRANSACT_RE.match(x)
+    if match['instance']:
+        return int(match['instance'])
+    else:
+        return 0
+
+
+def get_latest_file_location():
+    """Return a string representing the location of the most
+    recently downloaded transactions file.
+
+    """
+    dl_files = os.listdir(cfg.paths.downloads)
+    trans_files = [x for x in dl_files if TRANSACT_RE.match(x)]
+    trans_files.sort(key=_sort_files, reverse=True)
+    trans_file = trans_files[0]
+    return cfg.paths.downloads + trans_file
+
+
+def delete_all_transaction_files():
+    """Delete all transactions files in the Downloads folder.
+
+    """
+    dl_files = os.listdir(cfg.paths.downloads)
+    trans_files = [x for x in dl_files if TRANSACT_RE.match(x)]
+    for f in trans_files:
+        try:
+            fl_path = cfg.paths.downloads + f
+            os.remove(str(fl_path))
+        except Exception as e:
+            print(e)
 
 
 def get_next_month_start(month, year):
@@ -62,13 +104,38 @@ def match_recurring(x, recurring):
     Otherwise return None.
 
     """
-    for _, (column, subgroup, pattern, _, _) in recurring.iterrows():
+    for _, (subgroup, column, pattern, _, _) in recurring.iterrows():
         if re.match(pattern, x[column]):
             return subgroup
     return None
 
 
-def apply_transaction_groups(x, recurring):
+def get_investments(template_path=None):
+    """Return a dataframe of investment transactions as outlined in
+    the template file.
+
+    """
+    if template_path is None:
+        template_path = cfg.paths.template
+    investments = pd.read_excel(str(template_path),
+                                sheet_name='Investments',
+                                skiprows=2)
+    investments = investments.dropna(subset=['Pattern'])
+    return investments
+
+
+def match_investments(x, investments):
+    """Return the subgroup of investment transactions only.
+    Otherwise return None.
+
+    """
+    for _, (subgroup, column, pattern, _, _) in investments.iterrows():
+        if re.match(pattern, x[column]):
+            return subgroup
+    return None
+
+
+def apply_transaction_groups(x, recurring, investments):
     """Return a transactions group and subgroup.
     Transaction groups can be either income, rent, recurring, or
     discretionary spending.
@@ -87,6 +154,10 @@ def apply_transaction_groups(x, recurring):
             return 'Income', 'Middle-of-Month'
         if x['Date'].day > 20:
             return 'Income', 'End-of-Month'
+    # Check if investment
+    invest_subgroup = match_investments(x, investments)
+    if invest_subgroup:
+        return 'Investments', invest_subgroup
     # Check if wash
     if x['Category'] in WASH:
         return 'Wash', x['Category']
@@ -105,7 +176,7 @@ def get_transactions(file_path=None, refine=True):
 
     """
     if file_path is None:
-        file_path = mintkit.core.tasks.get_latest_file_location()
+        file_path = get_latest_file_location()
     transactions = pd.read_csv(file_path)
     if not refine:
         return transactions
@@ -116,11 +187,12 @@ def get_transactions(file_path=None, refine=True):
         -x['Amount'] if x['Transaction Type'] == 'debit'
         else x['Amount'], axis=1)
     recurring = get_recurring()
+    investments = get_investments()
     transactions[['Group', 'Subgroup']] = transactions.apply(
         apply_transaction_groups,
         axis=1,
         result_type='expand',
-        args=(recurring,))
+        args=(recurring, investments))
     return transactions
 
 
@@ -133,7 +205,7 @@ def get_date_index(start_date, end_date):
     return date_index
 
 
-def get_group_index(recurring):
+def get_group_index(recurring, investments):
     """Return a MultiIndex with Groups and Subgroups that should be
     left-mergeable with summaries derived from Transaction data.
     This function could break if Mint later modifies their categories.
@@ -148,8 +220,11 @@ def get_group_index(recurring):
     rent_pairs = [('Rent', 'Mortgage & Rent')]
     recurring_pairs = [('Recurring', sg) for sg in
                        recurring['Subgroup'].tolist()]
+    investment_pairs = [('Investments', sg) for sg in
+                        investments['Subgroup'].tolist()]
     disc_pairs = [('Discretionary', 'Discretionary')]
-    all_pairs = income_pairs + rent_pairs + recurring_pairs + disc_pairs
+    all_pairs = income_pairs + rent_pairs + recurring_pairs + \
+        investment_pairs + disc_pairs
     group_index = pd.MultiIndex.from_tuples(
         all_pairs, names=['Group', 'Subgroup'])
     return group_index
@@ -231,8 +306,7 @@ def get_excel_template_df(template_path=None):
 
 
 def apply_cash_flow_projections(x):
-    """
-    If the line item is income, return any nonzero realized items,
+    """If the line item is income, return any nonzero realized items,
     otherwise return the expected column's value.
     If item is an expense, return the minimum between the expected
     and realized values.
@@ -247,7 +321,7 @@ def apply_cash_flow_projections(x):
         return min(x['Expected'], x['Realized'])
 
 
-def get_cash_flow_summary(transactions=None, recurring=None,
+def get_cash_flow_summary(transactions=None, recurring=None, investments=None,
                           template_path=None, month=None, year=None):
     """Return a DataFrame that replicates the cash flow summary
     as it would be structured in the template Excel sheet (Cash Flow.xlsm).
@@ -257,6 +331,8 @@ def get_cash_flow_summary(transactions=None, recurring=None,
         transactions = get_transactions()
     if recurring is None:
         recurring = get_recurring()
+    if investments is None:
+        investments = get_investments()
 
     template = get_excel_template_df(template_path)
     template = template[['Subgroup', 'Expected']]
@@ -265,35 +341,53 @@ def get_cash_flow_summary(transactions=None, recurring=None,
         transactions, month, year, append_net=False)
     group_spend = group_spend.drop(['debit', 'credit'], axis=1)
     group_spend = group_spend.rename(columns={'net': 'Realized'})
-    group_index = get_group_index(recurring)
+    group_index = get_group_index(recurring, investments)
     group_spend = group_spend.reindex(group_index)
     group_spend = group_spend.reset_index()
 
     cash_flow = pd.merge(group_spend, template,
-                        how='left',
-                        on='Subgroup')
+                         how='left',
+                         on='Subgroup')
     cash_flow = cash_flow.fillna(0)
     cash_flow['Projected'] = cash_flow.apply(
         apply_cash_flow_projections, axis=1)
-    cash_flow['Remaining'] = np.NaN
+    cash_flow['RemainingCF'] = np.NaN
+    cash_flow['RemainingNW'] = np.NaN
     cash_flow = cash_flow.set_index(['Group', 'Subgroup'])
     # Remaining after income
-    income_rem = cash_flow.loc[('Income', slice(None)), 'Projected'].sum()
+    paycheck_rem = cash_flow.loc[('Income', 'Middle-of-Month'), 'Projected']
+    paycheck_rem += cash_flow.loc[('Income', 'End-of-Month'), 'Projected']
+    cash_flow.loc[('Income', 'End-of-Month'), 'RemainingCF'] = paycheck_rem
     last_idx = [x[1] for x in cash_flow.index if x[0] == 'Income'][-1]
-    cash_flow.loc[('Income', last_idx), 'Remaining'] = income_rem
+    income_rem = cash_flow.loc[('Income', slice(None)), 'Projected'].sum()
+    cash_flow.loc[('Income', last_idx), 'RemainingNW'] = income_rem
     # Remaining after rent
     proj_rent = cash_flow.loc[('Rent', 'Mortgage & Rent'), 'Projected']
-    rent_rem = income_rem + proj_rent
-    cash_flow.loc[('Rent', 'Mortgage & Rent'), 'Remaining'] = rent_rem
+    rent_rem_cf = paycheck_rem + proj_rent
+    rent_rem_nw = income_rem + proj_rent
+    cash_flow.loc[('Rent', 'Mortgage & Rent'), 'RemainingCF'] = rent_rem_cf
+    cash_flow.loc[('Rent', 'Mortgage & Rent'), 'RemainingNW'] = rent_rem_nw
     # Remaining after recurring
     proj_recur = cash_flow.loc[('Recurring', slice(None)), 'Projected'].sum()
-    recur_rem = rent_rem + proj_recur
+    recur_rem_cf = rent_rem_cf + proj_recur
+    recur_rem_nw = rent_rem_nw + proj_recur
     last_idx = [x[1] for x in cash_flow.index if x[0] == 'Recurring'][-1]
-    cash_flow.loc[('Recurring', last_idx), 'Remaining'] = recur_rem
+    cash_flow.loc[('Recurring', last_idx), 'RemainingCF'] = recur_rem_cf
+    cash_flow.loc[('Recurring', last_idx), 'RemainingNW'] = recur_rem_nw
+    # Remaining after investments
+    proj_invest = cash_flow.loc[('Investments', slice(None)),
+                                'Projected'].sum()
+    invest_rem_cf = recur_rem_cf + proj_invest
+    last_idx = [x[1] for x in cash_flow.index if x[0] == 'Investments'][-1]
+    cash_flow.loc[('Investments', last_idx), 'RemainingCF'] = invest_rem_cf
     # Remaining after discretionary
     real_disc = cash_flow.loc[('Discretionary', 'Discretionary'), 'Realized']
-    disc_rem = recur_rem + real_disc
-    cash_flow.loc[('Discretionary', 'Discretionary'), 'Remaining'] = disc_rem
+    disc_rem_cf = invest_rem_cf + real_disc
+    disc_rem_nw = recur_rem_nw + real_disc
+    cash_flow.loc[('Discretionary', 'Discretionary'),
+                  'RemainingCF'] = disc_rem_cf
+    cash_flow.loc[('Discretionary', 'Discretionary'),
+                  'RemainingNW'] = disc_rem_nw
     return cash_flow
 
 

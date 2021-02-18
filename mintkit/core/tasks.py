@@ -13,54 +13,9 @@ import time
 
 log = mintkit.utils.logging.get_logger(cfg.PROJECT_NAME)
 
-# Regular Expressions
-TRANSACT_PATTERN = r'transactions(?: \((?P<instance>\d+)\))?\.csv'
-TRANSACT_RE = re.compile(TRANSACT_PATTERN)
-
 # URLs
 MINT_URL = 'http://www.mint.com'
 
-
-# HELPER FUNCTIONS ############################################################
-
-def _sort_files(x):
-    """Return the sort key index for a transaction file.
-
-    """
-    match = TRANSACT_RE.match(x)
-    if match['instance']:
-        return int(match['instance'])
-    else:
-        return 0
-
-
-def get_latest_file_location():
-    """Return a string representing the location of the most
-    recently downloaded transactions file.
-
-    """
-    dl_files = os.listdir(cfg.paths.downloads)
-    trans_files = [x for x in dl_files if TRANSACT_RE.match(x)]
-    trans_files.sort(key=_sort_files, reverse=True)
-    trans_file = trans_files[0]
-    return cfg.paths.downloads + trans_file
-
-
-def delete_all_transaction_files():
-    """
-    Delete all transactions files in the Downloads folder.
-    """
-    dl_files = os.listdir(cfg.paths.downloads)
-    trans_files = [x for x in dl_files if TRANSACT_RE.match(x)]
-    for f in trans_files:
-        try:
-            fl_path = cfg.paths.downloads + f
-            os.remove(str(fl_path))
-        except Exception as e:
-            print(e)
-
-
-# MAIN FUNCTIONALITY ##########################################################
 
 def login_mint(driver):
     """Sign in to Mint.com
