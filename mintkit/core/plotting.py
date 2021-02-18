@@ -13,7 +13,8 @@ log = mintkit.utils.logging.get_logger(cfg.PROJECT_NAME)
 register_matplotlib_converters()
 
 
-def plot_spending(transactions=None, recurring=None, month=None, year=None):
+def plot_spending(transactions=None, recurring=None, investments=None,
+                  month=None, year=None):
     """Plot actual spending by day alongside the linear prorated spending
     rate.
 
@@ -27,6 +28,8 @@ def plot_spending(transactions=None, recurring=None, month=None, year=None):
         transactions = mintkit.core.analytics.get_transactions()
     if recurring is None:
         recurring = mintkit.core.analytics.get_recurring()
+    if investments is None:
+        investments = mintkit.core.analytics.get_investments()
     start_date = datetime.date(year, month, 1)
     next_start = mintkit.core.analytics.get_next_month_start(month, year)
     end_date = next_start - datetime.timedelta(days=1)
@@ -51,14 +54,35 @@ def plot_spending(transactions=None, recurring=None, month=None, year=None):
     discr_stats['Amount'] *= -1
     cash_flow = mintkit.core.analytics.get_cash_flow_summary(
         transactions=transactions, recurring=recurring,
-        month=month, year=year)
-    discr_inc = cash_flow.loc[('Recurring', slice(None)), 'Remaining'].iloc[-1]
-    discr_inc_dly = pd.DataFrame(
+        investments=investments, month=month, year=year)
+    discr_cf = cash_flow.loc[('Investments', slice(None)),
+                             'RemainingCF'].iloc[-1]
+    discr_nw = cash_flow.loc[('Recurring', slice(None)),
+                             'RemainingNW'].iloc[-1]
+    # Adjust for over-investment
+    inv_exp = cash_flow.loc[('Investments', slice(None)),
+                            'Expected'].sum()
+    recur_rem_cf = cash_flow.loc[('Recurring', slice(None)),
+                                 'RemainingCF'].iloc[-1]
+    discr_cf_exp = recur_rem_cf + inv_exp
+    discr_dly = pd.DataFrame(
         data=zip(mintkit.core.analytics.get_date_index(start_date, end_date),
-                 np.arange(discr_inc / days, discr_inc, discr_inc / days)),
-        columns=['Date', 'Allocated'])
+                 np.arange(discr_cf / days,
+                           discr_cf,
+                           discr_cf / days),
+                 np.arange(discr_nw / days,
+                           discr_nw,
+                           discr_nw / days),
+                 np.arange(discr_cf_exp / days,
+                           discr_cf_exp,
+                           discr_cf_exp / days)),
+        columns=['Date', 'AllocatedCF', 'AllocatedNW', 'AllocatedCFExp'])
     fig, ax = plt.subplots()
-    plt.plot_date(discr_inc_dly['Date'], discr_inc_dly['Allocated'], '-')
+    plt.plot_date(discr_dly['Date'], discr_dly['AllocatedNW'], '-')
+    plt.plot_date(discr_dly['Date'], discr_dly['AllocatedCF'], '-')
+    # Dotted line will only appear when spending on investments exceeds
+    # expectations
+    plt.plot_date(discr_dly['Date'], discr_dly['AllocatedCFExp'], '--')
     plt.plot_date(discr_stats['Date'], discr_stats['Amount'], '-')
     plt.title('Spending By Day')
     plt.xticks(rotation=45)
