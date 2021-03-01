@@ -79,10 +79,10 @@ def plot_spending(transactions=None, recurring=None, investments=None,
         columns=['Date', 'AllocatedCF', 'AllocatedNW', 'AllocatedCFExp'])
     fig, ax = plt.subplots()
     plt.plot_date(discr_dly['Date'], discr_dly['AllocatedNW'], '-')
-    plt.plot_date(discr_dly['Date'], discr_dly['AllocatedCF'], '-')
     # Dotted line will only appear when spending on investments exceeds
     # expectations
     plt.plot_date(discr_dly['Date'], discr_dly['AllocatedCFExp'], '--')
+    plt.plot_date(discr_dly['Date'], discr_dly['AllocatedCF'], '-')
     plt.plot_date(discr_stats['Date'], discr_stats['Amount'], '-')
     plt.title('Spending By Day')
     plt.xticks(rotation=45)
