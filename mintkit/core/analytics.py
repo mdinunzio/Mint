@@ -425,7 +425,8 @@ def get_current_month_spending_stats(transactions=None, recurring=None,
     return spent, spent_pace, rem_cf, rem_cf_pace, rem_nw, rem_nw_pace
 
 
-def get_recent_spending_summary(transactions=None, recurring=None, lookback=5):
+def get_recent_spending_summary(transactions=None, recurring=None,
+                                investments=None, lookback=5):
     """Return an HTML string summarizing recent discretionary spending
     activity.
 
@@ -434,6 +435,8 @@ def get_recent_spending_summary(transactions=None, recurring=None, lookback=5):
         transactions = get_transactions()
     if recurring is None:
         recurring = get_recurring()
+    if investments is None:
+        investments = get_investments()
     df_lookback, count_lookback = get_spending_by_day(
         transactions=transactions, lookback=lookback, append_total=False)
     spent_lookback = df_lookback['Amount'].sum()
@@ -443,8 +446,9 @@ def get_recent_spending_summary(transactions=None, recurring=None, lookback=5):
      rem_cf,
      rem_cf_pace,
      rem_nw,
-     rem_nw_pace) = get_current_month_spending_stats(
-        transactions=transactions, recurring=recurring)
+     rem_nw_pace) = get_current_month_spending_stats(transactions=transactions,
+                                                     recurring=recurring,
+                                                     investments=investments)
     today = datetime.date.today()
     summary = f'{lookback:.0f}d: ({count_lookback:.0f} items)<br><br>'
     summary += df_lookback.to_html(header=False, index=False)

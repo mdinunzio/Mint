@@ -90,10 +90,12 @@ def send_spending_update_text():
     download_transactions()
     log.info('Retrieving files')
     transactions = mintkit.core.analytics.get_transactions()
+    investments = mintkit.core.analytics.get_investments()
     recurring = mintkit.core.analytics.get_recurring()
     log.info('Getting summaries')
     summary = mintkit.core.analytics.get_recent_spending_summary(
-        transactions=transactions, recurring=recurring, lookback=5)
+        transactions=transactions, recurring=recurring,
+        investments=investments, lookback=5)
     mintkit.core.plotting.plot_spending(
         transactions=transactions, recurring=recurring)
     log.info('Constructing text message (email).')
