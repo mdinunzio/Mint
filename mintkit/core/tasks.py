@@ -25,13 +25,14 @@ def login_mint(driver):
     driver.get(f'{MINT_URL}')
     sign_in_link = driver.await_element("a[aria-label='Sign in']")
     driver.jsclick(sign_in_link)
-    email_form = driver.await_element('#ius-userid')
-    email_form.clear()
-    email_form.send_keys(auth_api.mint.email)
-    pw_form = driver.await_element('#ius-password')
+    email_div = driver.await_element('#ius-account-chooser-option-b-text-0')
+    driver.jsclick(email_div)
+    pw_id = '#ius-sign-in-mfa-password-collection-current-password'
+    pw_form = driver.await_element(pw_id)
     pw_form.clear()
     pw_form.send_keys(auth_api.mint.password)
-    sign_in_btn = driver.await_element('#ius-sign-in-submit-btn')
+    btn_id = '#ius-sign-in-mfa-password-collection-continue-btn'
+    sign_in_btn = driver.await_element(btn_id)
     driver.jsclick(sign_in_btn)
     log.info('Finished logging in.')
 
