@@ -13,6 +13,7 @@ import mintkit.utils.paths
 import mintkit.core.tasks
 import mintkit.web.tasks
 import mintkit.auth.tasks
+import mintkit.gmail.tasks
 
 
 log = mintkit.utils.logging.get_logger(cfg.PROJECT_NAME)
@@ -47,6 +48,7 @@ _tasks = {'refresh': mintkit.core.tasks.refresh_accounts,
           'setup-paths': setup_paths,
           'setup-driver': mintkit.web.tasks.setup_chromedriver,
           'setup-creds': mintkit.auth.tasks.setup_credentials,
+          'setup-gmail': mintkit.gmail.tasks.setup_gmail_credentials,
           'logs': open_logs}
 
 
