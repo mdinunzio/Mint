@@ -23,7 +23,7 @@ def login_mint(driver):
     """
     log.info('Logging into Mint.')
     driver.get(f'{MINT_URL}')
-    sign_in_link = driver.await_element("a[aria-label='Sign in']")
+    sign_in_link = driver.await_element("a[data-identifier='sign-in']")
     driver.jsclick(sign_in_link)
     email_div = driver.await_element('#ius-account-chooser-option-b-text-0')
     driver.jsclick(email_div)
