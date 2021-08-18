@@ -87,8 +87,8 @@ def send_spending_update_text(download=True):
 
     """
     log.info('Preparing spending summary text')
-    log.info('Downloading transactions')
     if download:
+        log.info('Downloading transactions')
         download_transactions()
     log.info('Retrieving files')
     transactions = mintkit.core.analytics.get_transactions()
@@ -109,3 +109,32 @@ def send_spending_update_text(download=True):
     email.add_image('spending', cfg.paths.plots + 'spending.png')
     email.send()
     log.info('Text update sent')
+
+
+def send_auto_spending_text(download=False):
+    """Send the auto spending update text message.
+
+    """
+    log.info('Preparing auto spending summary text')
+    if download:
+        log.info('Downloading transactions')
+        download_transactions()
+    transactions = mintkit.core.analytics.get_transactions()
+    auto_stats = mintkit.core.analytics.get_current_auto_spending_stats(
+        transactions)
+    auto_stats = auto_stats.reset_index()
+    auto_smry = auto_stats.to_html(index=False, header=False)
+    today = datetime.date.today()
+    email = mintkit.gmail.email.EmailMessage()
+    email.subject = f'Auto Spending {today:%a, %b %d}'
+    email.to = auth_api.user.mobile + '@vzwpix.com'
+    email.body = auto_smry
+    email.send()
+
+
+def send_texts():
+    """Send all texts.
+
+    """
+    send_spending_update_text(download=True)
+    send_auto_spending_text(download=False)

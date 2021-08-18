@@ -43,7 +43,7 @@ def setup_paths():
 
 
 _tasks = {'refresh': mintkit.core.tasks.refresh_accounts,
-          'text': mintkit.core.tasks.send_spending_update_text,
+          'text': mintkit.core.tasks.send_texts,
           'setup': setup,
           'setup-paths': setup_paths,
           'setup-driver': mintkit.web.tasks.setup_chromedriver,

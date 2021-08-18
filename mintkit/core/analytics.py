@@ -430,17 +430,21 @@ def get_current_month_spending_stats(transactions=None, recurring=None,
     return spent, spent_pace, rem_cf, rem_cf_pace, rem_nw, rem_nw_pace
 
 
-def get_current_month_flagged_spending(transactions=None):
+def get_current_auto_spending_stats(transactions=None):
+    if transactions is None:
+        transactions = get_transactions()
     today = datetime.date.today()
     day = today.day
     month = today.month
     year = today.year
     first_of_month = datetime.date(year, month, 1)
     monthly_trans = transactions[transactions['Date'] >= first_of_month]
-    parking_df = monthly_trans[monthly_trans['Category'] == 'Parking']
-    insurance_df = monthly_trans[monthly_trans['Category'] == 'Auto Insurance']
-    other_auto_df = monthly_trans[monthly_trans['Category'] ==
-                                  'Auto & Transport']
+    auto_cat = ['Parking', 'Auto Insurance', 'Auto & Transport']
+    auto_df = monthly_trans[monthly_trans['Category'].isin(auto_cat)]
+    auto_stats = auto_df.groupby(['Category'])[['Amount']].sum()
+    auto_stats = auto_stats.reindex(auto_cat)
+    auto_stats = auto_stats.fillna(0)
+    return auto_stats
 
 
 def get_recent_spending_summary(transactions=None, recurring=None,
