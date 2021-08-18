@@ -16,7 +16,7 @@ log = mintkit.utils.logging.get_logger(cfg.PROJECT_NAME)
 INCOME = ['Income', 'Bonus', 'Interest Income', 'Paycheck', 'Reimbursement',
           'Rental Income', 'Returned Purchase']
 # Wash categories
-WASH = ['Credit Card Payment', 'Transfer', 'Investments']
+WASH = ['Credit Card Payment', 'Transfer']
 # Transaction groups
 GROUPS = ['Income', 'Rent', 'Recurring', 'Investments', 'Discretionary']
 
@@ -155,9 +155,14 @@ def apply_transaction_groups(x, recurring, investments):
         if x['Date'].day > 20:
             return 'Income', 'End-of-Month'
     # Check if investment
+    # Note that you cannot manually set a category to "Investments" in Mint
+    # Note that only post-tax contributions should be defined as investments
     invest_subgroup = match_investments(x, investments)
     if invest_subgroup:
         return 'Investments', invest_subgroup
+    # Check if unidentified investment
+    if x['Category'] == 'Investments':
+        return 'Investments', 'Investments'
     # Check if wash
     if x['Category'] in WASH:
         return 'Wash', x['Category']
@@ -423,6 +428,19 @@ def get_current_month_spending_stats(transactions=None, recurring=None,
     rem_cf_pace = rem_cf / days_left
     rem_nw_pace = rem_nw / days_left
     return spent, spent_pace, rem_cf, rem_cf_pace, rem_nw, rem_nw_pace
+
+
+def get_current_month_flagged_spending(transactions=None):
+    today = datetime.date.today()
+    day = today.day
+    month = today.month
+    year = today.year
+    first_of_month = datetime.date(year, month, 1)
+    monthly_trans = transactions[transactions['Date'] >= first_of_month]
+    parking_df = monthly_trans[monthly_trans['Category'] == 'Parking']
+    insurance_df = monthly_trans[monthly_trans['Category'] == 'Auto Insurance']
+    other_auto_df = monthly_trans[monthly_trans['Category'] ==
+                                  'Auto & Transport']
 
 
 def get_recent_spending_summary(transactions=None, recurring=None,

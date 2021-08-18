@@ -82,13 +82,14 @@ def download_transactions(driver=None, logged_in=False):
     log.info('Mint transactions exported successfully.')
 
 
-def send_spending_update_text():
+def send_spending_update_text(download=True):
     """Send the spending update text message.
 
     """
     log.info('Preparing spending summary text')
     log.info('Downloading transactions')
-    download_transactions()
+    if download:
+        download_transactions()
     log.info('Retrieving files')
     transactions = mintkit.core.analytics.get_transactions()
     investments = mintkit.core.analytics.get_investments()
