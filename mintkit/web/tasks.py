@@ -3,6 +3,7 @@ import mintkit.utils.logging
 import mintkit.utils.env
 import requests
 import zipfile
+import subprocess
 from bs4 import BeautifulSoup
 import re
 
@@ -56,6 +57,22 @@ def download_chromedriver_zip(version, chunk_size=128):
     return zip_path
 
 
+def get_chromedriver_version(abridged=True):
+    """Return a string with the current chromedriver version.
+
+    """
+    if not cfg.paths.chromedriver.exists():
+        return
+    cmd = str(cfg.paths.chromedriver) + ' --version'
+    res = subprocess.run(cmd, capture_output=True)
+    version = res.stdout.decode('utf-8')
+    if not abridged:
+        return version
+    version = version.split(' ')[1]
+    version = version.strip()
+    return version
+
+
 def extract_chromedriver_zip(zip_path):
     """Extract the chromedriver zip file to is appropriate location in
     the Program Files (x86) folder.
@@ -83,3 +100,29 @@ def setup_chromedriver():
     zip_path = download_chromedriver_zip(chrome_ver_short)
     extract_chromedriver_zip(zip_path)
     log.info('Chromedriver setup complete.')
+
+
+def ensure_driver_compatibility():
+    """Download the a compatible driver version if necessary.
+
+    """
+    driver_ver = get_chromedriver_version(abridged=True)
+    if driver_ver is None:
+        log.info('No Chromedriver detected. Beginning installation.')
+        setup_chromedriver()
+    chrome_ver = mintkit.utils.env.get_chrome_version()
+    driver_split = [int(x) for x in driver_ver.split('.')]
+    chrome_split = [int(x) for x in driver_ver.split('.')]
+    ver_comps = min(len(driver_split), len(chrome_split))
+    for i in range(ver_comps):
+        if driver_split[i] < chrome_split[i]:
+            log.info(f'Driver version {driver_ver} is less than '
+                     f'Chrome version {chrome_ver}. '
+                     f'Beginning Chromedriver re-installation.')
+            setup_chromedriver()
+        elif driver_split[i] > chrome_split[i]:
+            log.info(f'Driver version {driver_ver} is greater than '
+                     f'Chrome version {chrome_ver}. '
+                     f'No need for driver update.')
+            return
+    log.info('Chrome version and driver version are equal.')

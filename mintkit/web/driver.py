@@ -4,6 +4,7 @@
 import mintkit.config as cfg
 import mintkit.utils.logging
 import mintkit.utils.env
+import mintkit.web.tasks
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -23,6 +24,7 @@ class WebDriver:
         """
         self.profile = cfg.paths.chrome_profile
         self.driver = None
+        mintkit.web.tasks.ensure_driver_compatibility()
         try:
             self.start_driver()
         except Exception as e:
