@@ -1,4 +1,4 @@
-CREATE TABLE public."MintTransactions" (
+CREATE TABLE finances."MintTransactions" (
 	"Date" date NULL,
 	"Description" varchar NULL,
 	"OriginalDescription" varchar NULL,
@@ -13,13 +13,13 @@ CREATE TABLE public."MintTransactions" (
 
 -- Column comments
 
-COMMENT ON COLUMN public.minttransactions."Date" IS 'The date of the transaction.';
-COMMENT ON COLUMN public.minttransactions."Description" IS 'Mint''s description of the transaction.';
-COMMENT ON COLUMN public.minttransactions."OriginalDescription" IS 'The orignal source''s description of the transaction.';
-COMMENT ON COLUMN public.minttransactions."Amount" IS 'The amount of the transaction.';
-COMMENT ON COLUMN public.minttransactions."TransactionType" IS 'Whether the transaction was a debit or credit.';
-COMMENT ON COLUMN public.minttransactions."Category" IS 'Mint''s categorization of the transaction.';
-COMMENT ON COLUMN public.minttransactions."AccountName" IS 'The source account of the transaction.';
-COMMENT ON COLUMN public.minttransactions."Labels" IS 'Labels from Mint.';
-COMMENT ON COLUMN public.minttransactions."Notes" IS 'Notes from Mint.';
-COMMENT ON COLUMN public.minttransactions."UpdateDatetime" IS 'The timestamp at which the row was last updated.';
+COMMENT ON COLUMN finances."MintTransactions"."Date" IS 'The date of the transaction.';
+COMMENT ON COLUMN finances."MintTransactions"."Description" IS 'Mint''s description of the transaction.';
+COMMENT ON COLUMN finances."MintTransactions"."OriginalDescription" IS 'The orignal source''s description of the transaction.';
+COMMENT ON COLUMN finances."MintTransactions"."Amount" IS 'The amount of the transaction.';
+COMMENT ON COLUMN finances."MintTransactions"."TransactionType" IS 'Whether the transaction was a debit or credit.';
+COMMENT ON COLUMN finances."MintTransactions"."Category" IS 'Mint''s categorization of the transaction.';
+COMMENT ON COLUMN finances."MintTransactions"."AccountName" IS 'The source account of the transaction.';
+COMMENT ON COLUMN finances."MintTransactions"."Labels" IS 'Labels from Mint.';
+COMMENT ON COLUMN finances."MintTransactions"."Notes" IS 'Notes from Mint.';
+COMMENT ON COLUMN finances."MintTransactions"."UpdateDatetime" IS 'The timestamp at which the row was last updated.';
