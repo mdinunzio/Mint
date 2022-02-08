@@ -42,26 +42,25 @@ discretionary spending, and wash transactions which should be ignored. Additiona
 the distinction between net worth change calculations and cash flow change calculations.
 There are six possible groups a transaction can fall into:
 
-- **Rent** encompasses any transaction with the Mint Category "Mortgage and Rent".
+- **"Rent"** encompasses any transaction with the Mint Category "Mortgage and Rent".
   
-- **Income** encompasses all the following Mint Categories: Income, Bonus, Interest Income,
+- **"Income"** encompasses all the following Mint Categories: Income, Bonus, Interest Income,
   Paycheck, Reimbursement, Rental Income, Returned Purchase.
   
-- **Wash** encompasses all the following Mint Categories: Credit Card Payment, Transfer, Duplicate.
+- **"Wash"** encompasses all the following Mint Categories: Credit Card Payment, Transfer, Duplicate.
   
-- **Recurring** is defined by a custom pattern matching scheme on various columns
+- **"Recurring"** is defined by a custom pattern matching scheme on various columns
   and is designed to represent transactions which happen each month which can be planned
   ahead of time.
   
-- **Investments** is defined by a custom pattern matching scheme on various columns
+- **"Investments"** is defined by a custom pattern matching scheme on various columns
   as well as anything assigned to the category "Investments" by Mint. Note that "Investments"
   is not a standard Category normally accessible in the Mint UI. This group is designed
   to represent deposit transactions which happen each month and can be planned ahead of time.
   Additionally, it distinguishes between transactions used to calculate changes in net worth 
   and those used to calculate changes in cash flow.
   
-
-- **Discretionary** is any type of spending which does not fall into the above groups.
+- **"Discretionary"** is any type of spending which does not fall into the above groups.
 
 ## Account Notes
 
