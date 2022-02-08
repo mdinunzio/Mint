@@ -1,14 +1,6 @@
-import sys
-import os
-
-_this_path = __file__
-_app_path = os.path.dirname(_this_path)
-_proj_path = os.path.dirname(_app_path)
-sys.path.append(_proj_path)
-
 import click
-import mintkit.config as cfg
-import mintkit.utils.logging
+import mintkit.settings as cfg
+import mintkit.utils.logs
 import mintkit.utils.paths
 import mintkit.core.tasks
 import mintkit.web.tasks
@@ -16,7 +8,7 @@ import mintkit.auth.tasks
 import mintkit.gmail.tasks
 
 
-log = mintkit.utils.logging.get_logger(cfg.PROJECT_NAME)
+log = mintkit.utils.logs.get_logger(cfg.PROJECT_NAME)
 
 
 def open_logs():

@@ -1,17 +1,14 @@
-import mintkit.config as cfg
-import mintkit.utils.logging
+import mintkit.settings as cfg
+import mintkit.utils.logs
 import mintkit.core.analytics
 import mintkit.core.plotting
 import mintkit.gmail.email
-import mintkit.web.driver
 from mintkit.auth.api import auth_api
 import datetime
-import os
-import re
 import time
 
 
-log = mintkit.utils.logging.get_logger(cfg.PROJECT_NAME)
+log = mintkit.utils.logs.get_logger(cfg.PROJECT_NAME)
 
 # URLs
 MINT_URL = 'http://www.mint.com'

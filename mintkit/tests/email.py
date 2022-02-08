@@ -1,4 +1,4 @@
-import mintkit.config as cfg
+import mintkit.settings as cfg
 from mintkit.auth.api import auth_api
 import mintkit.gmail.email
 

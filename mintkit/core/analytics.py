@@ -1,5 +1,5 @@
-import mintkit.config as cfg
-import mintkit.utils.logging
+import mintkit.settings as cfg
+import mintkit.utils.logs
 import mintkit.core.tasks
 from mintkit.utils.formatting import usd
 import pandas as pd
@@ -9,7 +9,7 @@ import re
 import os
 
 
-log = mintkit.utils.logging.get_logger(cfg.PROJECT_NAME)
+log = mintkit.utils.logs.get_logger(cfg.PROJECT_NAME)
 
 
 # Income categories
@@ -42,7 +42,7 @@ def get_latest_file_location():
 
     """
     dl_files = os.listdir(cfg.paths.downloads)
-    trans_files = [x for x in dl_files if TRANSACT_RE.match(x)]
+    trans_files = [x for x in d
     trans_files.sort(key=_sort_files, reverse=True)
     trans_file = trans_files[0]
     return cfg.paths.downloads + trans_file

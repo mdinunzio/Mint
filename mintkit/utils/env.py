@@ -1,5 +1,5 @@
-import mintkit.config as cfg
-import mintkit.utils.logging
+import mintkit.settings as cfg
+import mintkit.utils.logs
 import os
 import psutil
 import ctypes
@@ -7,7 +7,7 @@ import sys
 import subprocess
 
 
-log = mintkit.utils.logging.get_logger(cfg.PROJECT_NAME)
+log = mintkit.utils.logs.get_logger(cfg.PROJECT_NAME)
 
 
 def get_username():

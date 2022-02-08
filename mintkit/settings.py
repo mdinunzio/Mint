@@ -1,5 +1,5 @@
 import mintkit.utils.paths
-import mintkit.utils.logging
+import mintkit.utils.logs
 import os
 import pandas as pd
 
@@ -34,9 +34,9 @@ paths.template = mintkit.utils.paths.get_template_path(paths)
 DEBUG = os.environ.get('MINTKITDEBUG') == 1
 
 # logging setup
-mintkit.utils.logging.set_logging_directory(paths.logs)
-mintkit.utils.logging.set_debug_mode(DEBUG)
-log = mintkit.utils.logging.get_logger(PROJECT_NAME)
+mintkit.utils.logs.set_logging_directory(paths.logs)
+mintkit.utils.logs.set_debug_mode(DEBUG)
+log = mintkit.utils.logs.get_logger(PROJECT_NAME)
 
 # pandas setup
 pd.set_option('display.max_columns', 500)

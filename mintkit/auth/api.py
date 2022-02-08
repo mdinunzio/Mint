@@ -1,12 +1,12 @@
-import mintkit.config as cfg
-import mintkit.utils.logging
+import mintkit.settings as cfg
+import mintkit.utils.logs
 import mintkit.auth.cred
 import mintkit.utils.env
 import pickle
 import os
 
 
-log = mintkit.utils.logging.get_logger(cfg.PROJECT_NAME)
+log = mintkit.utils.logs.get_logger(cfg.PROJECT_NAME)
 
 
 class AuthApi:

@@ -1,5 +1,5 @@
-import mintkit.config as cfg
-import mintkit.utils.logging
+import mintkit.settings as cfg
+import mintkit.utils.logs
 import mintkit.core.analytics
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
@@ -9,7 +9,7 @@ import numpy as np
 import datetime
 
 
-log = mintkit.utils.logging.get_logger(cfg.PROJECT_NAME)
+log = mintkit.utils.logs.get_logger(cfg.PROJECT_NAME)
 register_matplotlib_converters()
 
 
