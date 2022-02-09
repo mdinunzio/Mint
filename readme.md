@@ -68,3 +68,10 @@ There are six possible groups a transaction can fall into:
   This was replaced by "Investor Checking ...458" which uses the new  authentication protocol.
   Duplicate transactions were manually removed on 2/8/2022.
   
+## Forecast Conventions (Spreadsheet)
+- **Discretionary Spending:** If today's date is greater than the end date, than it is equal to
+  the MTD discretionary spending figure. Otherwise, it is the minimum of the MTD discretionary
+  spending figure and the allocated discretionary spending figure.
+  
+- **All Others:** If an MTD figure is not zero, the MTD figure is used. Otherwise, the
+  forecast figure is used.
