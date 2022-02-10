@@ -69,9 +69,15 @@ There are six possible groups a transaction can fall into:
   Duplicate transactions were manually removed on 2/8/2022.
   
 ## Forecast Conventions (Spreadsheet)
-- **Discretionary Spending:** If today's date is greater than the end date, than it is equal to
-  the MTD discretionary spending figure. Otherwise, it is the minimum of the MTD discretionary
-  spending figure and the allocated discretionary spending figure.
+
+- **Salary/Income:** If today's date is greater than the end date, then it is equal to the MTD 
+  figure. Otherwise, if the MTD figure is non-zero, it is it the MTD figure. If this MTD figure 
+  is zero, it is the allocated figure.
   
-- **All Others:** If an MTD figure is not zero, the MTD figure is used. Otherwise, the
-  forecast figure is used.
+- **Rent/Recurring/Discretionary Spending/Investments:** If today's date is greater than the 
+  end date, then it is equal to the MTD figure. Otherwise, it is the minimum of the MTD figure 
+  and the allocated figure.
+  
+- In summary, income assumes the non-zero case, whereas expenses and investments assume the
+  worst case.
+  
