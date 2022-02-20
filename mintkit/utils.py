@@ -1,5 +1,5 @@
 import mintkit.settings as cfg
-import mintkit.utils.logs
+import mintkit.logs
 import os
 import psutil
 import ctypes
@@ -7,7 +7,7 @@ import sys
 import subprocess
 
 
-log = mintkit.utils.logs.get_logger(cfg.PROJECT_NAME)
+log = mintkit.logs.get_logger(cfg.PROJECT_NAME)
 
 
 def get_username():
@@ -46,3 +46,13 @@ def request_uac(task):
     params = str(cfg.paths.app + 'run.py') + f' --task {task}'
     ctypes.windll.shell32.ShellExecuteW(
         None, "runas", sys.executable, params, None, 1)
+
+
+def format_as_usd(number, decimal_places=2):
+    """Return a properly formatted USD currency figure.
+
+    """
+    if number >= 0:
+        return f'${number:,.{decimal_places}f}'
+    else:
+        return f'-${abs(number):,.{decimal_places}f}'

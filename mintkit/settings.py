@@ -1,5 +1,5 @@
-import mintkit.utils.paths
-import mintkit.utils.logs
+import mintkit.paths
+import mintkit.logs
 import os
 import pandas as pd
 
@@ -7,10 +7,10 @@ import pandas as pd
 PROJECT_NAME = 'MintKit'
 
 # path definition
-paths = mintkit.utils.paths.PathManager()
-paths.app = mintkit.utils.paths.Path(__file__) + '..'
+paths = mintkit.paths.PathManager()
+paths.app = mintkit.paths.Path(__file__) + '..'
 paths.base = paths.app + '..'
-paths.home = mintkit.utils.paths.Path(os.path.expanduser('~'))
+paths.home = mintkit.paths.Path(os.path.expanduser('~'))
 paths.desktop = paths.home + 'Desktop'
 paths.downloads = paths.home + 'Downloads'
 paths.local = paths.home + 'AppData' + 'Local'
@@ -20,24 +20,24 @@ paths.user = paths.appdata + paths.home[-1]
 paths.settings = paths.user + 'settings'
 paths.creds = paths.user + 'creds'
 paths.plots = paths.user + 'plots'
-paths.x86 = mintkit.utils.paths.Path(r"C:\Program Files (x86)")
+paths.x86 = mintkit.paths.Path(r"C:\Program Files (x86)")
 paths.chrome = paths.x86 + r'Google\Chrome\Application\chrome.exe'
 paths.chrome_profile = paths.local + r'Google\Chrome\User Data\Default'
 paths.chromedriver = paths.user + r'chromedriver_win32\chromedriver.exe'
 # ensure paths exist
-mintkit.utils.paths.create_key_paths(paths)
+mintkit.paths.create_key_paths(paths)
 # get template path
-paths.template = mintkit.utils.paths.get_template_path(paths)
+paths.template = mintkit.paths.get_template_path(paths)
 
 
-# debug settings
-DEBUG = os.environ.get('MINTKITDEBUG') == 1
+# Set debug mode.
+IS_DEBUG = os.environ.get('MINTKITDEBUG') == 1
 
 # logging setup
-mintkit.utils.logs.set_logging_directory(paths.logs)
-mintkit.utils.logs.set_debug_mode(DEBUG)
-log = mintkit.utils.logs.get_logger(PROJECT_NAME)
+mintkit.logs.set_logging_directory(paths.logs)
+mintkit.logs.set_debug_mode(IS_DEBUG)
+log = mintkit.logs.get_logger(PROJECT_NAME)
 
-# pandas setup
+# Set pandas display settings.
 pd.set_option('display.max_columns', 500)
 pd.set_option('display.width', 1000)

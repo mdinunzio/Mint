@@ -1,12 +1,12 @@
 import mintkit.settings as cfg
-import mintkit.utils.logs
-import mintkit.utils.paths
+import mintkit.logs
+import mintkit.paths
 import Crypto.Cipher.AES
 import hashlib
 import pickle
 
 
-log = mintkit.utils.logs.get_logger(cfg.PROJECT_NAME)
+log = mintkit.logs.get_logger(cfg.PROJECT_NAME)
 
 
 class Secret:
@@ -61,7 +61,7 @@ class Secret:
         if directory is None:
             directory = cfg.paths.creds
         else:
-            directory = mintkit.utils.paths.Path(directory)
+            directory = mintkit.paths.Path(directory)
         path = directory + f'{name}.sec'
         with open(path, 'wb') as file:
             pickle.dump(self, file)

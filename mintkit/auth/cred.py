@@ -1,10 +1,10 @@
 import mintkit.settings as cfg
-import mintkit.utils.logs
+import mintkit.logs
 import mintkit.auth.secret
 import json
 
 
-log = mintkit.utils.logs.get_logger(cfg.PROJECT_NAME)
+log = mintkit.logs.get_logger(cfg.PROJECT_NAME)
 
 
 class Credential:

@@ -2,13 +2,13 @@
 
 """
 import mintkit.settings as cfg
-import mintkit.utils.logs
+import mintkit.logs
 from google_auth_oauthlib.flow import InstalledAppFlow
 import subprocess
 import pickle
 import os
 
-log = mintkit.utils.logs.get_logger(cfg.PROJECT_NAME)
+log = mintkit.logs.get_logger(cfg.PROJECT_NAME)
 
 
 def open_enable_api_page():

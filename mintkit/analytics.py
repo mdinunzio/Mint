@@ -1,6 +1,6 @@
 import mintkit.settings as cfg
-import mintkit.utils.logs
-import mintkit.core.tasks
+import mintkit.logs
+import mintkit.core
 from mintkit.utils.formatting import usd
 import pandas as pd
 import numpy as np
@@ -9,7 +9,7 @@ import re
 import os
 
 
-log = mintkit.utils.logs.get_logger(cfg.PROJECT_NAME)
+log = mintkit.logs.get_logger(cfg.PROJECT_NAME)
 
 
 # Income categories

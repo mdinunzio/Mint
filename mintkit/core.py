@@ -1,14 +1,14 @@
 import mintkit.settings as cfg
-import mintkit.utils.logs
-import mintkit.core.analytics
-import mintkit.core.plotting
-import mintkit.gmail.email
+import mintkit.logs
+import mintkit.analytics
+import mintkit.plotting
+import mintkit.gmail
 from mintkit.auth.api import auth_api
 import datetime
 import time
 
 
-log = mintkit.utils.logs.get_logger(cfg.PROJECT_NAME)
+log = mintkit.logs.get_logger(cfg.PROJECT_NAME)
 
 # URLs
 MINT_URL = 'http://www.mint.com'
@@ -88,18 +88,18 @@ def send_spending_update_text(download=True):
         log.info('Downloading transactions')
         download_transactions()
     log.info('Retrieving files')
-    transactions = mintkit.core.analytics.get_transactions()
-    investments = mintkit.core.analytics.get_investments()
-    recurring = mintkit.core.analytics.get_recurring()
+    transactions = mintkit.analytics.get_transactions()
+    investments = mintkit.analytics.get_investments()
+    recurring = mintkit.analytics.get_recurring()
     log.info('Getting summaries')
-    summary = mintkit.core.analytics.get_recent_spending_summary(
+    summary = mintkit.analytics.get_recent_spending_summary(
         transactions=transactions, recurring=recurring,
         investments=investments, lookback=5)
-    mintkit.core.plotting.plot_spending(
+    mintkit.plotting.plot_spending(
         transactions=transactions, recurring=recurring)
     log.info('Constructing text message (email).')
     today = datetime.date.today()
-    email = mintkit.gmail.email.EmailMessage()
+    email = mintkit.gmail.EmailMessage()
     email.subject = f'Spending {today:%a, %b %d}'
     email.to = auth_api.user.mobile + '@vzwpix.com'
     email.body = summary
@@ -116,13 +116,13 @@ def send_auto_spending_text(download=False):
     if download:
         log.info('Downloading transactions')
         download_transactions()
-    transactions = mintkit.core.analytics.get_transactions()
-    auto_stats = mintkit.core.analytics.get_current_auto_spending_stats(
+    transactions = mintkit.analytics.get_transactions()
+    auto_stats = mintkit.analytics.get_current_auto_spending_stats(
         transactions)
     auto_stats = auto_stats.reset_index()
     auto_smry = auto_stats.to_html(index=False, header=False)
     today = datetime.date.today()
-    email = mintkit.gmail.email.EmailMessage()
+    email = mintkit.gmail.EmailMessage()
     email.subject = f'Auto Spending {today:%a, %b %d}'
     email.to = auth_api.user.mobile + '@vzwpix.com'
     email.body = auto_smry

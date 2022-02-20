@@ -1,6 +1,6 @@
 import mintkit.settings as cfg
-import mintkit.utils.logs
-import mintkit.core.analytics
+import mintkit.logs
+import mintkit.analytics
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from pandas.plotting import register_matplotlib_converters
@@ -9,7 +9,7 @@ import numpy as np
 import datetime
 
 
-log = mintkit.utils.logs.get_logger(cfg.PROJECT_NAME)
+log = mintkit.logs.get_logger(cfg.PROJECT_NAME)
 register_matplotlib_converters()
 
 
@@ -25,15 +25,15 @@ def plot_spending(transactions=None, recurring=None, investments=None,
     if year is None:
         year = today.year
     if transactions is None:
-        transactions = mintkit.core.analytics.get_transactions()
+        transactions = mintkit.analytics.get_transactions()
     if recurring is None:
-        recurring = mintkit.core.analytics.get_recurring()
+        recurring = mintkit.analytics.get_recurring()
     if investments is None:
-        investments = mintkit.core.analytics.get_investments()
+        investments = mintkit.analytics.get_investments()
     start_date = datetime.date(year, month, 1)
-    next_start = mintkit.core.analytics.get_next_month_start(month, year)
+    next_start = mintkit.analytics.get_next_month_start(month, year)
     end_date = next_start - datetime.timedelta(days=1)
-    days = mintkit.core.analytics.get_days_in_month(month, year)
+    days = mintkit.analytics.get_days_in_month(month, year)
     discr = transactions.copy(deep=True)
     discr = discr[discr['Group'] == 'Discretionary']
     discr = discr[discr['Date'] >= start_date]
@@ -47,12 +47,12 @@ def plot_spending(transactions=None, recurring=None, investments=None,
     latest_date = min(latest_date, end_date)
     lhs = pd.DataFrame(
         columns=['Date'],
-        data=mintkit.core.analytics.get_date_index(start_date, latest_date))
+        data=mintkit.analytics.get_date_index(start_date, latest_date))
     discr_stats = pd.merge(lhs, discr_stats, how='left', on='Date')
     discr_stats['Amount'] = discr_stats['Amount'].fillna(0)
     discr_stats['Amount'] = discr_stats['Amount'].cumsum()
     discr_stats['Amount'] *= -1
-    cash_flow = mintkit.core.analytics.get_cash_flow_summary(
+    cash_flow = mintkit.analytics.get_cash_flow_summary(
         transactions=transactions, recurring=recurring,
         investments=investments, month=month, year=year)
     discr_cf = cash_flow.loc[('Investments', slice(None)),
@@ -66,7 +66,7 @@ def plot_spending(transactions=None, recurring=None, investments=None,
                                  'RemainingCF'].iloc[-1]
     discr_cf_exp = recur_rem_cf + inv_exp
     discr_dly = pd.DataFrame(
-        data=zip(mintkit.core.analytics.get_date_index(start_date, end_date),
+        data=zip(mintkit.analytics.get_date_index(start_date, end_date),
                  np.arange(discr_cf / days,
                            discr_cf,
                            discr_cf / days),

@@ -1,8 +1,8 @@
 import mintkit.settings as cfg
 from mintkit.auth.api import auth_api
-import mintkit.gmail.email
+import mintkit.gmail
 
-email = mintkit.gmail.email.EmailMessage()
+email = mintkit.gmail.EmailMessage()
 
 email.add_image('one', cfg.paths.plots + 'spending.png')
 email.to = auth_api.user.mobile + '@vzwpix.com'

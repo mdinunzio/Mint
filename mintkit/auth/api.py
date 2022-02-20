@@ -1,12 +1,12 @@
 import mintkit.settings as cfg
-import mintkit.utils.logs
+import mintkit.logs
 import mintkit.auth.cred
-import mintkit.utils.env
+import mintkit.utils
 import pickle
 import os
 
 
-log = mintkit.utils.logs.get_logger(cfg.PROJECT_NAME)
+log = mintkit.logs.get_logger(cfg.PROJECT_NAME)
 
 
 class AuthApi:
@@ -50,7 +50,7 @@ class AuthApi:
         """Set all credentials simultaneously.
 
         """
-        self.username = mintkit.utils.env.get_username()
+        self.username = mintkit.utils.get_username()
         self.set_mint()
         self.set_user()
         self.set_gmail()

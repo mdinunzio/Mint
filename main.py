@@ -1,14 +1,10 @@
 import click
 import mintkit.settings as cfg
-import mintkit.utils.logs
-import mintkit.utils.paths
-import mintkit.core.tasks
-import mintkit.web.tasks
-import mintkit.auth.tasks
-import mintkit.gmail.tasks
+import mintkit.logs
+import mintkit.paths
 
 
-log = mintkit.utils.logs.get_logger(cfg.PROJECT_NAME)
+log = mintkit.logs.get_logger(cfg.PROJECT_NAME)
 
 
 def open_logs():
@@ -22,7 +18,7 @@ def setup():
     """Setup the credentials and driver.
 
     """
-    mintkit.utils.paths.setup_template_path(cfg.paths)
+    mintkit.paths.setup_template_path(cfg.paths)
     mintkit.web.tasks.setup_chromedriver()
     mintkit.auth.tasks.setup_credentials()
 
@@ -31,7 +27,7 @@ def setup_paths():
     """Setup all configurable paths.
 
     """
-    mintkit.utils.paths.setup_template_path(cfg.paths)
+    mintkit.paths.setup_template_path(cfg.paths)
 
 
 _tasks = {'refresh': mintkit.core.tasks.refresh_accounts,
@@ -44,6 +40,15 @@ _tasks = {'refresh': mintkit.core.tasks.refresh_accounts,
           'logs': open_logs}
 
 
+def main(task):
+    """Run the specified task."""
+    try:
+        _tasks[task]()
+    except Exception as e:
+        log.exception(e)
+        raise
+
+
 @click.command()
 @click.option(
     "--task",
@@ -52,14 +57,8 @@ _tasks = {'refresh': mintkit.core.tasks.refresh_accounts,
     help="Name of task to execute."
 )
 def main_cli(task):
-    """Run the specified task.
-
-    """
-    try:
-        _tasks[task]()
-    except Exception as e:
-        log.exception(e)
-        raise
+    """Run the specified task."""
+    main(task)
 
 
 if __name__ == "__main__":
