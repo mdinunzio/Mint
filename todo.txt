@@ -1,0 +1,14 @@
+- Create sheet reader
+- Redo paths in settings
+- Redo logger
+- Create matching objects from recurring patterns
+- Create DB loader with matched groups
+    - Create local dev DB
+- Build analytics functions for monthly real-time data
+- Build analytics for annual retrospective data
+- Make overbudget alerts
+- Build plots for monthly real-time data (cyber plot)
+- Rebuild gmail component to use service account and include typing
+- Build core module to tie code together
+- Rebuild auth to include typing and more sensible API
+- Work on cloud deployment
