@@ -1,6 +1,6 @@
 CREATE TABLE finances."MintTransactions_dev" (
-	"Date" date NULL,
-	"Description" varchar NULL,
+	"Date" date NOT NULL,
+	"Description" varchar NOT NULL,
 	"OriginalDescription" varchar NULL,
 	"Amount" numeric NULL,
 	"TransactionType" varchar NULL,
@@ -13,7 +13,27 @@ CREATE TABLE finances."MintTransactions_dev" (
 	"Subgroup" varchar NULL
 );
 
--- Column comments
+CREATE INDEX "MintTransactions_dev_idx_date" ON finances."MintTransactions_dev" (
+    "Date" DESC
+);
+
+CREATE INDEX "MintTransactions_dev_idx_des" ON finances."MintTransactions_dev" (
+    "Description"
+);
+
+CREATE INDEX "MintTransactions_dev_idx_type" ON finances."MintTransactions_dev" (
+    "TransactionType"
+);
+
+CREATE INDEX "MintTransactions_dev_idx_grp" ON finances."MintTransactions_dev" (
+    "Group"
+);
+
+CREATE INDEX "MintTransactions_dev_idx_sgrp" ON finances."MintTransactions_dev" (
+    "Subgroup"
+);
+
+
 
 COMMENT ON COLUMN finances."MintTransactions_dev"."Date" IS 'The date of the transaction.';
 COMMENT ON COLUMN finances."MintTransactions_dev"."Description" IS 'Mint''s description of the transaction.';
