@@ -15,7 +15,7 @@ CREATE TABLE finances."MintTransactions" (
 
 COMMENT ON COLUMN finances."MintTransactions"."Date" IS 'The date of the transaction.';
 COMMENT ON COLUMN finances."MintTransactions"."Description" IS 'Mint''s description of the transaction.';
-COMMENT ON COLUMN finances."MintTransactions"."OriginalDescription" IS 'The orignal source''s description of the transaction.';
+COMMENT ON COLUMN finances."MintTransactions"."OriginalDescription" IS 'The original source''s description of the transaction.';
 COMMENT ON COLUMN finances."MintTransactions"."Amount" IS 'The amount of the transaction.';
 COMMENT ON COLUMN finances."MintTransactions"."TransactionType" IS 'Whether the transaction was a debit or credit.';
 COMMENT ON COLUMN finances."MintTransactions"."Category" IS 'Mint''s categorization of the transaction.';
